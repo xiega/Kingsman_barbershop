@@ -501,9 +501,10 @@ export default function Home() {
           {googleReviews.map((review, index) => (
             <div key={index} className="review-card group w-[85vw] md:w-[420px] min-h-[270px] shrink-0 snap-center bg-gradient-to-br from-[#171717] via-[#0f0f0f] to-[#0a0a0a] border border-white/5 p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:border-kingsman-gold/60">
               <div className="absolute -top-16 -right-14 w-36 h-36 rounded-full border border-kingsman-gold/10 transition-transform duration-700 group-hover:scale-125"></div>
-              <div className="absolute top-4 left-5 text-6xl leading-none font-serif text-kingsman-gold/10 select-none">“</div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between gap-4 mb-7">
+              {/* Poprawiona pozycja i zablokowanie klikania cudzysłowu */}
+              <div className="absolute top-1 left-4 text-5xl md:text-6xl leading-none font-serif text-kingsman-gold/10 select-none pointer-events-none">“</div>
+              <div className="relative z-10 pt-2">
+                <div className="flex items-center justify-between gap-4 mb-5">
                   <div className="flex gap-1 text-kingsman-gold text-xs">{[0,1,2,3,4].map((star) => <FaStar key={star} className="drop-shadow-[0_0_8px_rgba(212,175,55,.25)]" />)}</div>
                   <span className="text-[10px] text-gray-500 uppercase tracking-[0.18em] border border-white/10 rounded-full px-3 py-1">{review.date}</span>
                 </div>
