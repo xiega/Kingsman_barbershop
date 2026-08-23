@@ -390,9 +390,9 @@ export default function Home() {
                   <span className="text-xs text-gray-600 uppercase tracking-[0.2em] mt-1 group-hover:text-gray-400">Standard Agencji</span>
                 </div>
                 
-                <div className="relative z-10 flex items-center gap-4">
-                  <div className="h-[1px] w-8 bg-gray-800 group-hover:w-16 group-hover:bg-kingsman-gold transition-all duration-500"></div>
-                  <span className="text-2xl font-black text-kingsman-gold drop-shadow-[0_0_8px_rgba(212,175,55,0.2)]">{item.price} <span className="text-sm text-gray-500">PLN</span></span>
+                <div className="relative z-10 flex items-center gap-4 shrink-0">
+                  <div className="h-[1px] w-6 md:w-16 bg-gray-800 group-hover:bg-kingsman-gold transition-all duration-500"></div>
+                  <span className="text-2xl font-black text-kingsman-gold drop-shadow-[0_0_8px_rgba(212,175,55,0.2)] whitespace-nowrap">{item.price} <span className="text-sm text-gray-500">PLN</span></span>
                 </div>
               </div>
             ))}
