@@ -104,6 +104,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-gray-300 font-sans overflow-x-hidden selection:bg-kingsman-gold selection:text-black scroll-smooth">
       
+      {/* DODANE H1 NIEWIDOCZNE DLA UŻYTKOWNIKA, ALE CZYTANE PRZEZ GOOGLE */}
+      <h1 className="sr-only">Kingsman Barbershop Poznań - Twój Barber na Wildzie. Profesjonalne strzyżenie, trymowanie brody.</h1>
+      <h1 className="sr-only">Najlepszy Barber w Poznaniu.</h1>
+      <h1 className="sr-only">Najlepszy Barber Wilda. </h1>
+
       <style>{`
         html {
           scroll-behavior: smooth;
@@ -241,7 +246,7 @@ export default function Home() {
             <FaCut className="relative z-10 text-6xl md:text-7xl text-kingsman-gold drop-shadow-[0_0_20px_rgba(212,175,55,0.9)] -rotate-90 hover:rotate-0 transition-transform duration-700 animate-pulse" />
           </div>
           
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-[0.1em] leading-snug opacity-90 drop-shadow-2xl">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-[0.1em] leading-snug opacity-90 drop-shadow-2xl">
             <span className="text-gray-300">"Twój styl to </span>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-kingsman-gold via-yellow-200 to-kingsman-gold animate-shine">
               zbroja
@@ -251,7 +256,7 @@ export default function Home() {
             <span className="text-sm md:text-xl text-gray-500 mt-6 block tracking-[0.2em] font-bold">
               A Kingsman to zbrojownia, w której wykuwamy ją na nowo."
             </span>
-          </h1>
+          </h2>
           
           <div className="flex items-center justify-center gap-4 mt-10 opacity-80">
             <div className="w-12 md:w-24 h-px gold-divider"></div>
