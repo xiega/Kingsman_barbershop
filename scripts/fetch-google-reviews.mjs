@@ -81,12 +81,26 @@ async function main() {
   }
   try {
     const placeId = process.env.GOOGLE_PLACE_ID || (await findPlaceId());
-    const place = await api(`${BASE}/places/${encodeURIComponent(placeId)}?languageCode=pl`, {
-      headers: { "X-Goog-FieldMask": "id,displayName,rating,userRatingCount,googleMapsUri,reviews" },
-    });
-    const raw = place.reviews ?? [];
+    // Kilka podejść: zwykle wystarcza pierwsze. Kolejne ruszają tylko, gdy Google nie odda opinii.
+    const BASE_MASK = "id,displayName,rating,userRatingCount,googleMapsUri,reviews";
+    const attempts = [
+      { label: "język pl", query: "?languageCode=pl", mask: BASE_MASK },
+      { label: "bez języka", query: "", mask: BASE_MASK },
+      { label: "wszystkie pola", query: "", mask: "*" },
+    ];
+    let place = null;
+    let raw = [];
+    for (const [i, a] of attempts.entries()) {
+      const res = await api(`${BASE}/places/${encodeURIComponent(placeId)}${a.query}`, {
+        headers: { "X-Goog-FieldMask": a.mask },
+      });
+      place = i === 0 ? res : { ...place, ...res };
+      raw = res.reviews ?? [];
+      console.log(`[reviews] podejście "${a.label}": ${raw.length} opinii; pola odpowiedzi: ${Object.keys(res).join(", ")}`);
+      if (raw.length > 0) break;
+    }
     const reviews = raw.map(mapReview).filter(Boolean);
-    console.log(`[reviews] odpowiedź Google: ${raw.length} opinii, z treścią: ${reviews.length}; pola odpowiedzi: ${Object.keys(place).join(", ")}`);
+    console.log(`[reviews] opinii z treścią: ${reviews.length}`);
     if (raw.length === 0) {
       console.warn("[reviews] Google nie zwróciło żadnych opinii dla tej wizytówki (sprawdź GOOGLE_PLACE_ID i czy to właściwa wizytówka)");
     }
