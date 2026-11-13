@@ -23,7 +23,7 @@ import googleData from "./google-reviews.json";
 const HERO_PHOTO = "photo-1599351431202-1e0f0137899a";
 
 /** Zdjęcie zespołu jest pokazywane, gdy plik istnieje w public/img/team. */
-/** Każda karta ma inny kształt opisu: skosy, schodki "piksel" i wcięta zakładka. */
+/** Każda karta ma inny kształt opisu: skosy, ścięte górne rogi i wcięta zakładka. */
 const BIO_SHAPES = ["bio-a", "bio-b", "bio-c"];
 
 function hasTeamPhoto(slug: string): boolean {
@@ -458,7 +458,7 @@ export default function Home() {
 
                   {member.bio && (
                     <div className={`bio ${BIO_SHAPES[index % BIO_SHAPES.length]} mt-3 flex-1`}>
-                      <div className={`h-full bg-surface p-5 ${index % BIO_SHAPES.length === 2 ? "pt-8" : ""} ${index % BIO_SHAPES.length === 1 ? "pt-9" : ""}`}>
+                      <div className={`h-full bg-surface p-5 ${index % BIO_SHAPES.length === 2 ? "pt-8" : ""}`}>
                         <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-gold/80">
                           {"// profil"}
                         </p>
