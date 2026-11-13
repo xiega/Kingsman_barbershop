@@ -22,6 +22,8 @@ header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'");
 
+date_default_timezone_set('Europe/Warsaw');
+
 const MAX_GALLERY = 8;
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_PIXELS = 50000000;
@@ -539,6 +541,43 @@ function price_group_html($g, array $grp = []): string
         . '<button type="button" class="add" data-add-row="' . h((string) $g) . '">+ Dodaj usługę</button></fieldset>';
 }
 
+/** Dane licznika z stats.json (zapisuje je track.php). */
+function load_stats(string $file): array
+{
+    $st = read_json($file) ?? [];
+    $hist = is_array($st['history'] ?? null) && count($st['history']) === 7
+        ? array_map('intval', array_values($st['history']))
+        : array_fill(0, 7, 0);
+    $today = strtotime(date('Y-m-d'));
+    $last = isset($st['last_date']) ? strtotime((string) $st['last_date']) : $today;
+    $shift = (int) max(0, min(7, round(($today - ($last ?: $today)) / 86400)));
+    if ($shift > 0) { // dni bez wejść: wykres przesuwa się o tyle dni
+        $hist = array_merge(array_slice($hist, $shift), array_fill(0, $shift, 0));
+    }
+    $labels = [];
+    for ($i = 0; $i < 7; $i++) {
+        $labels[] = date('j.m', strtotime('-' . (6 - $i) . ' days'));
+    }
+    return ['visits' => (int) ($st['visits'] ?? 0), 'clicks' => (int) ($st['clicks'] ?? 0), 'hist' => $hist, 'labels' => $labels];
+}
+
+function stats_chart_svg(array $vals, array $labels): string
+{
+    $w = 600; $hgt = 190; $top = 22; $bottom = 28; $max = max(1, ...$vals);
+    $plot = $hgt - $top - $bottom; $slot = $w / 7; $bar = $slot * 0.56;
+    $out = '<svg viewBox="0 0 ' . $w . ' ' . $hgt . '" role="img" aria-label="Wejścia z ostatnich 7 dni" style="width:100%;height:auto;display:block">';
+    $out .= '<line x1="0" y1="' . ($hgt - $bottom) . '" x2="' . $w . '" y2="' . ($hgt - $bottom) . '" stroke="rgba(255,255,255,.12)"/>';
+    foreach ($vals as $i => $v) {
+        $bh = $plot * $v / $max;
+        $x = $slot * $i + ($slot - $bar) / 2;
+        $y = $hgt - $bottom - $bh;
+        $out .= '<rect x="' . round($x, 1) . '" y="' . round($y, 1) . '" width="' . round($bar, 1) . '" height="' . round(max($bh, $v > 0 ? 2 : 0), 1) . '" fill="#d4af37" opacity=".85"/>';
+        $out .= '<text x="' . round($x + $bar / 2, 1) . '" y="' . round($y - 6, 1) . '" fill="#d1d5db" font-size="13" text-anchor="middle">' . $v . '</text>';
+        $out .= '<text x="' . round($x + $bar / 2, 1) . '" y="' . ($hgt - 8) . '" fill="#8b8f98" font-size="12" text-anchor="middle">' . h($labels[$i]) . '</text>';
+    }
+    return $out . '</svg>';
+}
+
 function review_row_html($i, array $r = []): string
 {
     $n = "r[$i]";
@@ -559,6 +598,7 @@ function review_row_html($i, array $r = []): string
         . '</div>';
 }
 
+$stats = $loggedIn ? load_stats($ROOT . '/stats.json') : null;
 $flashes = $_SESSION['flash'] ?? [];
 unset($_SESSION['flash']);
 $token = csrf();
@@ -600,6 +640,11 @@ $token = csrf();
   .rev { border:1px solid var(--line); padding:14px; margin-bottom:14px; display:grid; gap:10px; }
   .rev-top { display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px; }
   textarea, select { width:100%; padding:11px; background:#171717; color:#fff; border:1px solid rgba(212,175,55,.35); font:inherit; margin-top:4px; }
+  .stat-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:12px; }
+  .stat { background:#111; border:1px solid rgba(255,255,255,.06); padding:14px; text-align:center; }
+  .stat-l { display:block; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); }
+  .stat-n { display:block; font-size:2rem; font-weight:700; color:var(--gold); margin-top:6px; }
+  .chart { margin-top:18px; background:#111; border:1px solid rgba(255,255,255,.06); padding:14px; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   .photos { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; margin: 14px 0 18px; }
   .photo { border:1px solid var(--line); padding:8px; background:#111; }
@@ -611,6 +656,7 @@ $token = csrf();
   code { background:#171717; padding:2px 6px; }
   pre { background:#171717; padding:12px; overflow:auto; }
   @media (max-width: 720px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
     .row { grid-template-columns: 1fr 1fr; }
     .row .f-name, .row .f-note { grid-column: 1 / -1; }
     .row button.x { grid-column: 1 / -1; }
@@ -650,6 +696,19 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
       <form method="post" style="margin:0"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="<?= h($token) ?>"><button class="sec" type="submit">Wyloguj</button></form>
     </div>
   </div>
+
+  <!-- ============ STATYSTYKI ============ -->
+  <section class="card" id="statystyki">
+    <h2>Statystyki</h2>
+    <div class="stat-grid">
+      <div class="stat"><span class="stat-l">Wejścia na stronę</span><span class="stat-n"><?= number_format($stats['visits'], 0, ',', ' ') ?></span></div>
+      <div class="stat"><span class="stat-l">Kliknięcia w Booksy</span><span class="stat-n"><?= number_format($stats['clicks'], 0, ',', ' ') ?></span></div>
+      <div class="stat"><span class="stat-l">Ostatnie 7 dni</span><span class="stat-n"><?= array_sum($stats['hist']) ?></span></div>
+      <div class="stat"><span class="stat-l">Klik w Booksy / wejścia</span><span class="stat-n"><?= $stats['visits'] > 0 ? round(100 * $stats['clicks'] / $stats['visits']) . '%' : '–' ?></span></div>
+    </div>
+    <div class="chart"><?= stats_chart_svg($stats['hist'], $stats['labels']) ?></div>
+    <p class="hint">Wejście liczy się raz na sesję przeglądarki, boty są pomijane. Wykres jest dokładny od momentu wgrania nowego skryptu licznika.</p>
+  </section>
 
   <!-- ============ CENY ============ -->
   <section class="card" id="ceny">

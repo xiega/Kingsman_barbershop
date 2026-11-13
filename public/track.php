@@ -6,8 +6,16 @@
  *  - blokada pliku, żeby dwa jednoczesne wejścia nie nadpisały sobie licznika,
  *  - tylko metody GET/POST i typy visit/click.
  */
+date_default_timezone_set('Europe/Warsaw');
 header('Access-Control-Allow-Origin: *');
 header('Cache-Control: no-store');
+
+// boty i podglądy linków nie są klientami
+$ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+if ($ua === '' || preg_match('/bot|crawl|spider|slurp|headless|lighthouse|pingdom|uptime|preview|facebookexternalhit|curl|wget|python|monitor/i', $ua)) {
+    http_response_code(204);
+    exit;
+}
 
 $type = ($_GET['type'] ?? 'visit') === 'click' ? 'click' : 'visit';
 $file = __DIR__ . '/stats.json';
