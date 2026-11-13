@@ -103,11 +103,34 @@ Panel `https://kingsman-barbershop.pl/stats.php` żyje na serwerze, poza eksport
 
 Strona zgłasza wejścia i kliknięcia w Booksy komponentem `app/components/Tracker.tsx`
 (wejście raz na sesję, bez cookies, tylko na domenie produkcyjnej). Domyślnie woła `/track.php`;
-inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w `server/track.php`.
+inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w `public/track.php`.
 
 ## Wdrożenie na zwykły hosting (np. SEOhost)
 
 1. Opcjonalnie `.env.local` z `GOOGLE_PLACES_API_KEY` (opinie z Google).
 2. `npm install`, potem `npm run build`. Powstaje folder `out/` z gotową stroną.
 3. Wgraj **zawartość** folderu `out/` do głównego katalogu strony (zwykle `public_html`).
-4. Nie kasuj na serwerze `stats.php`, `track.php` i `stats.json` (licznik). `server/track.php` wgrywasz raz.
+4. Nie kasuj na serwerze `stats.php`, `track.php` i `stats.json` (licznik). `public/track.php` wgrywasz raz.
+
+## Panel dla właściciela: ceny i zdjęcia galerii (admin.php)
+
+`https://kingsman-barbershop.pl/admin.php` pozwala bez programowania:
+- zmieniać ceny, dodawać i usuwać usługi oraz grupy,
+- wgrywać zdjęcia do galerii sześciokątów (maks. 8), zmieniać ich kolejność i usuwać je.
+
+Zmiany zapisują się w `content.json` na serwerze, a strona czyta ten plik przy każdym wejściu,
+więc są widoczne od razu, bez budowania. Zdjęcia są automatycznie przycinane do 3:4 i
+zmniejszane (WebP 480 i 800 px). Wartości domyślne (gdy `content.json` nie istnieje) są w
+`app/content-defaults.json`.
+
+**Pierwsze uruchomienie:** na serwerze, obok `admin.php`, utwórz plik `admin-config.php`
+(wzór: `server/admin-config.example.php`) z hasłem. Po pierwszym logowaniu hasło zamieni się
+w hash. Wymagany PHP 8.0+ z rozszerzeniem GD (WebP).
+
+Wdrożenia nie nadpisują `content.json`, `uploads/` ani `admin-config.php`.
+
+## Automatyczne wdrożenie przez FTP (GitHub Actions)
+
+Plik `.github/workflows/deploy.yml` buduje stronę po każdej zmianie w `main`, codziennie rano
+(świeże opinie z Google) i na żądanie, po czym wysyła `out/` na serwer przez FTP.
+Sekrety i zmienne do ustawienia są opisane na początku tego pliku.
