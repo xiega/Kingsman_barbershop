@@ -20,6 +20,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+// Wczytaj klucz z .env.local (tak jak Next), jeśli plik istnieje; zmienne z systemu mają pierwszeństwo.
+for (const file of [".env.local", ".env"]) {
+  try {
+    process.loadEnvFile(path.join(ROOT, file));
+  } catch {
+    /* brak pliku albo starszy Node: pomijamy */
+  }
+}
 const OUT = process.env.REVIEWS_OUT || path.join(ROOT, "app", "google-reviews.json");
 const BASE = process.env.PLACES_API_BASE || "https://places.googleapis.com/v1";
 const KEY = process.env.GOOGLE_PLACES_API_KEY;

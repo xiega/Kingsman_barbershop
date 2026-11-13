@@ -84,3 +84,14 @@ Dobre do wiedzenia:
   cyklicznie (np. raz dziennie).
 - Błąd API nigdy nie przerywa builda: zostaje poprzedni plik albo opinie z `app/data.ts`.
 - Przy opiniach z Google strona pokazuje logo Google i link do profilu autora, tak jak wymagają zasady Google.
+
+### Lokalny build z kluczem Google
+
+Utwórz plik `.env.local` w katalogu głównym (jest w `.gitignore`, nie trafi do repo):
+
+```
+GOOGLE_PLACES_API_KEY=twój_klucz
+```
+
+Potem zwykły `npm run build` pobierze świeże opinie przed eksportem. Opinie odświeżają się tylko
+przy kolejnym buildzie. Na Vercel klucz dodaj w Settings → Environment Variables.
