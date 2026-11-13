@@ -81,9 +81,24 @@ export type TeamMember = {
 };
 
 export const TEAM: TeamMember[] = [
-  { slug: "julita", name: "Julita", role: "Barber", bio: "" },
-  { slug: "kacper", name: "Kacper", role: "Barber", bio: "" },
-  { slug: "wojtek", name: "Wojtek", role: "Barber", bio: "" },
+  {
+    slug: "julita",
+    name: "Julita",
+    role: "Barber",
+    bio: "Dietetykiem nie jest, ale ma duże zamiłowanie do brokułów 🥦. Jeśli jeździsz na Kukirinie lub słuchasz Okekela, koniecznie wpadnij na jej fotel 🤤🤤",
+  },
+  {
+    slug: "kacper",
+    name: "Kacper",
+    role: "Barber",
+    bio: "Kacper, inaczej grubson 🎤. Ciężki humor, debaty polityczne? Nie ma znaczenia, z nim każdy temat może być poruszony 😎 Ulubione strzyżenia? Każde 🥸. Nie ma znaczenia, z czym przyjdziesz na głowie, zawsze będzie ugotowane 🤤. Jestem tego pewny, w głębi duszy o tym wiem, że gdzieś na Różanej wszyscy razem spotkamy się ⛰️",
+  },
+  {
+    slug: "wojtek",
+    name: "Wojtek",
+    role: "Barber",
+    bio: "Nasz polsko-turecki wojownik zaprasza na fotel 💺\nŚrednio mówi po polsku, jeszcze gorzej po turecku 😩\nJedno jest pewne: zrobi strzyżenie lepiej niż twoja osiedlowa fryzjerka 💇 Buyrun 🇹🇷😆",
+  },
 ];
 
 export type Cut = {

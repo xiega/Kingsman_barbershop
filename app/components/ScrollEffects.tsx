@@ -37,6 +37,23 @@ export default function ScrollEffects() {
       cleanups.push(() => io.disconnect());
     }
 
+    // ---- animacje [data-anim] chodzą tylko, gdy sekcja jest widoczna ----
+    const animEls = Array.from(document.querySelectorAll<HTMLElement>("[data-anim]"));
+    if (!hasObserver) {
+      animEls.forEach((el) => el.classList.add("is-inview"));
+    } else {
+      const animIo = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            entry.target.classList.toggle("is-inview", entry.isIntersecting);
+          }
+        },
+        { rootMargin: "80px 0px" },
+      );
+      animEls.forEach((el) => animIo.observe(el));
+      cleanups.push(() => animIo.disconnect());
+    }
+
     // ---- parallax (tylko desktop + mysz) ----
     const parallaxAllowed =
       !reduceMotion &&

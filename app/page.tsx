@@ -40,8 +40,8 @@ function SectionHeading({
     <div data-reveal className={`mb-12 max-w-2xl md:mb-16 ${center ? "mx-auto text-center" : ""}`}>
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-gold">{eyebrow}</p>
       <h2 className="font-display text-3xl leading-tight text-bone md:text-5xl">{title}</h2>
-      <div className={`mt-5 h-px w-16 bg-gold/60 ${center ? "mx-auto" : ""}`} />
-      {intro && <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{intro}</p>}
+      <div aria-hidden="true" className={`barber-pole mt-5 h-1.5 w-20 opacity-80 ${center ? "mx-auto" : ""}`} />
+      {intro &&<p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{intro}</p>}
     </div>
   );
 }
@@ -142,22 +142,118 @@ export default function Home() {
       {/* ============ O NAS ============ */}
       <section id="about" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 md:px-8 md:py-28">
         <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
-          <div data-reveal className="relative mx-auto w-full max-w-md pb-6 lg:max-w-none">
+          <div
+            data-reveal
+            data-anim
+            data-parallax
+            className="relative mx-auto flex h-[480px] w-full max-w-md items-center justify-center md:h-[620px] lg:max-w-none"
+          >
+            {/* dekoracje za kadrem */}
             <div
               aria-hidden="true"
-              className="cut-corner absolute inset-0 translate-x-4 translate-y-4 border border-gold/40"
+              className="gold-orbit absolute h-72 w-72 rounded-full border border-gold/20 md:h-[28rem] md:w-[28rem]"
             />
-            <div className="cut-corner relative aspect-[4/5] overflow-hidden bg-surface">
-              <Img
-                name="about"
-                widths={[480, 800, 1200]}
-                sizes="(min-width: 1024px) 560px, 90vw"
-                width={800}
-                height={1200}
-                alt="Barber układa przedziałek brzytwą i grzebieniem"
-                className="h-full w-full object-cover"
+            <div
+              aria-hidden="true"
+              className="micro-pulse shape-diamond absolute h-60 w-60 bg-gold/10 md:h-80 md:w-80"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(201,165,92,0.14),transparent_70%)] md:h-72 md:w-72"
+            />
+
+            {/* wspólny kadr: nic z ruchomych zdjęć nie wychodzi poza sekcję */}
+            <div className="absolute inset-3 overflow-hidden rounded-[2rem] border border-white/5 bg-black/20 md:inset-0 md:rounded-[2.2rem]">
+              <div
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-gold/25 to-transparent"
               />
+              <div
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 h-3/4 w-px -translate-y-1/2 bg-gradient-to-b from-transparent via-gold/20 to-transparent"
+              />
+
+              {/* zdjęcie 01 */}
+              <div
+                data-speed="0.1"
+                className="shape-para-a absolute left-2 top-8 z-20 h-56 w-44 md:left-6 md:top-10 md:h-80 md:w-64"
+              >
+                <div className="identity-float relative h-full w-full overflow-hidden border border-gold/30 shadow-[0_20px_60px_rgba(0,0,0,.45)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=70&w=480&auto=format&fit=crop"
+                    srcSet={unsplashSrcSet("photo-1503951914875-452162b0f3f1", [320, 480, 640], 70)}
+                    sizes="(min-width: 768px) 256px, 176px"
+                    width={480}
+                    height={600}
+                    alt="Barber przy pracy"
+                    loading="lazy"
+                    decoding="async"
+                    className="about-img absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-gold/10" />
+                  <div className="pointer-events-none absolute bottom-3 left-3 whitespace-nowrap text-[8px] uppercase tracking-[0.22em] text-bone/80 md:bottom-4 md:left-4 md:text-[10px] md:tracking-[0.28em]">
+                    01 / Rzemiosło
+                  </div>
+                  <div className="pointer-events-none absolute right-3 top-3 text-[8px] uppercase tracking-[0.22em] text-gold md:right-4 md:top-4 md:text-[10px] md:tracking-[0.28em]">
+                    Kingsman
+                  </div>
+                </div>
+              </div>
+
+              {/* zdjęcie 02 */}
+              <div
+                data-speed="-0.1"
+                className="shape-para-b absolute bottom-8 right-2 z-10 h-56 w-44 border-l-2 border-gold/30 md:bottom-10 md:right-6 md:h-80 md:w-64"
+              >
+                <div className="identity-float-reverse relative h-full w-full overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,.45)]">
+                  <Img
+                    name="about"
+                    widths={[480, 800, 1200]}
+                    sizes="(min-width: 768px) 256px, 176px"
+                    width={800}
+                    height={1200}
+                    alt="Barber układa przedziałek brzytwą i grzebieniem"
+                    className="about-img absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="pointer-events-none absolute bottom-3 right-3 whitespace-nowrap text-[8px] uppercase tracking-[0.22em] text-bone/70 md:bottom-4 md:right-4 md:text-[10px] md:tracking-[0.28em]">
+                    02 / Charakter
+                  </div>
+                </div>
+              </div>
+
+              {/* skan światła i znak środka kompozycji */}
+              <div
+                aria-hidden="true"
+                className="identity-scan pointer-events-none absolute inset-x-[8%] top-0 z-30 h-1/3 bg-gradient-to-b from-transparent via-gold/20 to-transparent"
+              />
+              <div
+                aria-hidden="true"
+                className="micro-pulse absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/30 bg-black/60 md:h-20 md:w-20"
+              >
+                <span className="text-lg text-gold">♛</span>
+              </div>
+
+              <div
+                aria-hidden="true"
+                className="absolute bottom-4 left-5 z-40 text-[9px] uppercase tracking-[0.35em] text-muted/70"
+              >
+                IDENT. / 001
+              </div>
+              <div
+                aria-hidden="true"
+                className="absolute right-5 top-4 z-40 text-[9px] uppercase tracking-[0.35em] text-muted/70"
+              >
+                WILDA / POZNAŃ
+              </div>
             </div>
+
+            {/* rama prowadząca wzrok */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-6 z-40 rounded-[2.2rem] border border-gold/10 md:inset-3"
+            />
           </div>
 
           <div data-reveal="1">
@@ -165,7 +261,7 @@ export default function Home() {
             <h2 className="font-display text-3xl leading-tight md:text-5xl">
               Tworzymy <span className="text-gold">tożsamość</span>
             </h2>
-            <div className="mt-5 h-px w-16 bg-gold/60" />
+            <div aria-hidden="true" className="barber-pole mt-5 h-1.5 w-20 opacity-80" />
             <p className="mt-6 text-base leading-relaxed text-bone/80 md:text-lg">
               Nasza tajna baza na poznańskiej Wildzie to miejsce, w którym rzemiosło spotyka się z kinową
               elegancją. Wchodzisz tu jako mężczyzna, wychodzisz jako członek najbardziej elitarnego klubu
@@ -190,6 +286,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <div aria-hidden="true" className="barber-pole h-2 w-full opacity-60" />
 
       {/* ============ CENNIK ============ */}
       <section id="pricing" className="scroll-mt-20 border-y border-white/5 bg-[#0e0e0e] py-20 md:py-28">
@@ -281,7 +379,7 @@ export default function Home() {
                       widths={[400, 800]}
                       sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
                       width={800}
-                      height={1000}
+                      height={800}
                       alt={`${member.name}, ${member.role} w Kingsman Barbershop`}
                       className="h-full w-full object-cover"
                     />
@@ -305,7 +403,9 @@ export default function Home() {
                 <div className="mt-5">
                   <h3 className="font-display text-2xl text-bone">{member.name}</h3>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.25em] text-gold">{member.role}</p>
-                  {member.bio && <p className="mt-4 text-[15px] leading-relaxed text-muted">{member.bio}</p>}
+                  {member.bio && (
+                    <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-muted">{member.bio}</p>
+                  )}
                 </div>
               </article>
             );
@@ -374,6 +474,8 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+      <div aria-hidden="true" className="barber-pole h-2 w-full opacity-60" />
 
       {/* ============ KONTAKT / STOPKA ============ */}
       <footer id="contact" className="scroll-mt-20 border-t border-white/10 bg-black px-5 pb-10 pt-20 md:px-8">

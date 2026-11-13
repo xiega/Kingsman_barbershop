@@ -57,6 +57,170 @@ body {
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
 }
 
+.shape-para-a {
+  clip-path: polygon(20% 0%, 100% 0, 80% 100%, 0% 100%);
+}
+
+.shape-para-b {
+  clip-path: polygon(0 0, 80% 0, 100% 100%, 20% 100%);
+}
+
+.shape-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* ---------- Lampa barberska: animowany pasek ---------- */
+/* Okres 60px po przekątnej = 84.853px w poziomie, więc pętla jest bez szwu. */
+
+@keyframes barberPole {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 84.853px 84.853px;
+  }
+}
+
+.barber-pole {
+  background: repeating-linear-gradient(
+    -45deg,
+    #0a0a0a 0 20px,
+    var(--gold) 20px 40px,
+    #161616 40px 60px
+  );
+  background-size: 84.853px 84.853px;
+  animation: barberPole 3s linear infinite;
+}
+
+/* ---------- Animacje sekcji "Tworzymy tożsamość" ---------- */
+/* Wyłącznie transform + opacity (liczone na GPU), bez blura i filtrów w ruchu. */
+
+@keyframes identityFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(1deg);
+  }
+}
+
+@keyframes identityFloatReverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(1deg);
+  }
+  50% {
+    transform: translate3d(0, 16px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes goldOrbit {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+    opacity: 0.85;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes identityScan {
+  0%,
+  100% {
+    transform: translate3d(0, -110%, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.55;
+  }
+  55% {
+    opacity: 0.3;
+  }
+  75% {
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(0, 310%, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes microPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.identity-float {
+  animation: identityFloat 6s ease-in-out infinite;
+}
+
+.identity-float-reverse {
+  animation: identityFloatReverse 7s ease-in-out infinite;
+}
+
+.gold-orbit {
+  animation: goldOrbit 12s linear infinite;
+}
+
+.identity-scan {
+  animation: identityScan 7s ease-in-out infinite;
+}
+
+.micro-pulse {
+  animation: microPulse 4s ease-in-out infinite;
+}
+
+.about-img {
+  filter: grayscale(1);
+  opacity: 0.85;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-img {
+    transition:
+      filter 0.6s ease,
+      opacity 0.6s ease,
+      transform 0.7s ease;
+  }
+
+  .about-img:hover {
+    filter: none;
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Animacje chodzą tylko, gdy sekcja jest na ekranie (klasa dodawana w ScrollEffects). */
+@media (scripting: enabled) {
+  [data-anim]:not(.is-inview) * {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barber-pole,
+  .identity-float,
+  .identity-float-reverse,
+  .gold-orbit,
+  .identity-scan,
+  .micro-pulse {
+    animation: none;
+  }
+}
+
 /* ---------- Pojawianie się sekcji ---------- */
 /* Ukrywamy tylko gdy JS jest włączony i użytkownik nie wyłączył animacji,
    dzięki czemu treść nigdy nie zostaje niewidoczna. */
