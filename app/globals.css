@@ -1,26 +1,415 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0a0a0a;
+  --surface: #121212;
+  --gold: #c9a55c;
+  --gold-light: #e3c987;
+  --bone: #ede9e1;
+  --muted: #9a958c;
+  --neon: #ffe94a;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-bone: var(--bone);
+  --color-muted: var(--muted);
+  --color-neon: var(--neon);
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--gold);
+  color: #000;
+}
+
+/* ---------- Kształty (charakterystyczne "cięcia" marki) ---------- */
+
+.hex {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.slant-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% 94%, 0 100%);
+}
+
+.cut-corner {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
+}
+
+.shape-para-a {
+  clip-path: polygon(20% 0%, 100% 0, 80% 100%, 0% 100%);
+}
+
+.shape-para-b {
+  clip-path: polygon(0 0, 80% 0, 100% 100%, 20% 100%);
+}
+
+.shape-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* ---------- Lampa barberska: animowany pasek ---------- */
+/* Okres 60px po przekątnej = 84.853px w poziomie, więc pętla jest bez szwu. */
+
+@keyframes barberPole {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 84.853px 84.853px;
+  }
+}
+
+.barber-pole {
+  background: repeating-linear-gradient(
+    -45deg,
+    #0a0a0a 0 20px,
+    var(--gold) 20px 40px,
+    #161616 40px 60px
+  );
+  background-size: 84.853px 84.853px;
+  animation: barberPole 3s linear infinite;
+}
+
+/* ---------- Animacje sekcji "Tworzymy tożsamość" ---------- */
+/* Wyłącznie transform + opacity (liczone na GPU), bez blura i filtrów w ruchu. */
+
+@keyframes identityFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(1deg);
+  }
+}
+
+@keyframes identityFloatReverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(1deg);
+  }
+  50% {
+    transform: translate3d(0, 16px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes goldOrbit {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+    opacity: 0.85;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes microPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.identity-float {
+  animation: identityFloat 6s ease-in-out infinite;
+}
+
+.identity-float-reverse {
+  animation: identityFloatReverse 7s ease-in-out infinite;
+}
+
+.gold-orbit {
+  animation: goldOrbit 12s linear infinite;
+}
+
+.micro-pulse {
+  animation: microPulse 4s ease-in-out infinite;
+}
+
+.about-img {
+  filter: grayscale(1);
+  opacity: 0.85;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-img {
+    transition:
+      filter 0.6s ease,
+      opacity 0.6s ease,
+      transform 0.7s ease;
+  }
+
+  .about-img:hover {
+    filter: none;
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Animacje chodzą tylko, gdy sekcja jest na ekranie (klasa dodawana w ScrollEffects). */
+@media (scripting: enabled) {
+  [data-anim]:not(.is-inview) * {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barber-pole,
+  .identity-float,
+  .identity-float-reverse,
+  .gold-orbit,
+  .micro-pulse,
+  .neon-flicker {
+    animation: none;
+  }
+}
+
+/* ---------- Pojawianie się sekcji ---------- */
+/* Ukrywamy tylko gdy JS jest włączony i użytkownik nie wyłączył animacji,
+   dzięki czemu treść nigdy nie zostaje niewidoczna. */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    transition:
+      opacity 0.7s ease,
+      transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-reveal="1"] {
+    transition-delay: 0.1s;
+  }
+
+  [data-reveal="2"] {
+    transition-delay: 0.2s;
+  }
+}
+
+/* ---------- Galeria: efekty tylko tam, gdzie mają sens ---------- */
+/* Na telefonach: zero parallaxu, zero filtrów i zero hovera,
+   bo to one powodowały przycinanie przy przewijaniu. */
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  [data-speed] {
+    transform: translate3d(0, var(--py, 0px), 0);
+    will-change: transform;
+  }
+
+  .cut-img {
+    filter: grayscale(1) brightness(0.85);
+    transition:
+      filter 0.5s ease,
+      transform 0.6s ease;
+  }
+
+  .cut:hover .cut-img {
+    filter: none;
+    transform: scale(1.06);
+  }
+
+  .cut:hover {
+    position: relative;
+    z-index: 10;
+  }
+}
+
+/* ---------- Karuzela opinii ---------- */
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Galeria sześciokątów: bez ramki, delikatny cień tylko na desktopie ---------- */
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .hex-glow {
+    filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
+    transition: filter 0.5s ease;
+  }
+
+  .cut:hover .hex-glow,
+  .hex-glow:hover {
+    filter: drop-shadow(0 0 26px rgba(201, 165, 92, 0.22)) drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
+  }
+}
+
+/* ---------- Zespół: karta operatora (styl HUD) ---------- */
+/* Wszystko statyczne: żadnych animacji spadających z góry na dół. */
+
+.team-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(201, 165, 92, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 165, 92, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 75%);
+}
+
+.team-photo {
+  filter: grayscale(0.25) contrast(1.06) saturate(0.9);
+}
+
+.team-tone {
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 24%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.2) 42%, rgba(201, 165, 92, 0.12) 100%);
+}
+
+/* drobne poziome linie maskują artefakty kompresji i dają efekt ekranu */
+.team-lines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.045) 0,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.team-bracket {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--neon);
+  filter: drop-shadow(0 0 4px rgba(255, 233, 74, 0.7));
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .team-photo {
+    transition:
+      filter 0.5s ease,
+      transform 0.7s ease;
+  }
+
+  .team-card:hover .team-photo {
+    filter: none;
+    transform: scale(1.04);
+  }
+
+  .team-card:hover .team-bracket {
+    border-color: #fff6a8;
+  }
+}
+
+/* ---------- Żółty neon: akcenty (statyczne, jedno miganie tylko w opacity) ---------- */
+
+.neon-glow {
+  box-shadow:
+    0 0 6px rgba(255, 233, 74, 0.75),
+    0 0 24px rgba(255, 233, 74, 0.35),
+    inset 0 0 10px rgba(255, 233, 74, 0.25);
+}
+
+.neon-text {
+  color: var(--neon);
+  text-shadow:
+    0 0 6px rgba(255, 233, 74, 0.7),
+    0 0 18px rgba(255, 233, 74, 0.35);
+}
+
+.neon-dash {
+  display: inline-block;
+  width: 2rem;
+  height: 2px;
+  margin-right: 0.75rem;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--neon);
+  box-shadow:
+    0 0 6px rgba(255, 233, 74, 0.9),
+    0 0 14px rgba(255, 233, 74, 0.45);
+}
+
+@keyframes neonFlicker {
+  0%,
+  44%,
+  50%,
+  56%,
+  100% {
+    opacity: 0.8;
+  }
+  47%,
+  53% {
+    opacity: 0.3;
+  }
+}
+
+.neon-flicker {
+  animation: neonFlicker 7s linear infinite;
+}
+
+/* ---------- Opisy zespołu: nietypowe kształty z cienką ramką ---------- */
+
+.bio {
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201, 165, 92, 0.75), rgba(201, 165, 92, 0.12) 55%, rgba(255, 233, 74, 0.55));
+  clip-path: var(--bio-shape);
+}
+
+.bio > div {
+  clip-path: var(--bio-shape);
+}
+
+.bio-a {
+  --bio-shape: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 28px 100%, 0 calc(100% - 28px));
+}
+
+.bio-b {
+  /* ścięte oba górne rogi */
+  --bio-shape: polygon(28px 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%, 0 28px);
+}
+
+
+.bio-c {
+  --bio-shape: polygon(0 0, 42% 0, calc(42% + 18px) 16px, 100% 16px, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
 }

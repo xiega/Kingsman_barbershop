@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-google-reviews.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fetch-reviews": "node scripts/fetch-google-reviews.mjs"
   },
   "dependencies": {
     "next": "16.3.2",
