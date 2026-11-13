@@ -6,6 +6,7 @@ import { asset, imgSrcSet, unsplashSrcSet } from "@/lib/assets";
 import Img from "./components/Img";
 import ReviewsCarousel from "./components/ReviewsCarousel";
 import ScrollEffects from "./components/ScrollEffects";
+import Tracker from "./components/Tracker";
 import SiteHeader from "./components/SiteHeader";
 import {
   BOOKING_URL,
@@ -114,6 +115,7 @@ export default function Home() {
     <main id="top" className="min-h-screen overflow-x-clip bg-ink">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ScrollEffects />
+      <Tracker />
       <SiteHeader />
 
       {/* ============ HERO ============ */}

@@ -95,3 +95,12 @@ GOOGLE_PLACES_API_KEY=twój_klucz
 
 Potem zwykły `npm run build` pobierze świeże opinie przed eksportem. Opinie odświeżają się tylko
 przy kolejnym buildzie. Na Vercel klucz dodaj w Settings → Environment Variables.
+
+## Licznik odwiedzin (stats.php)
+
+Panel `https://kingsman-barbershop.pl/stats.php` żyje na serwerze, poza eksportem Next, więc
+**przy wgrywaniu nowej wersji strony nie kasuj `stats.php`, skryptu licznika ani `stats.json`**.
+
+Strona zgłasza wejścia i kliknięcia w Booksy komponentem `app/components/Tracker.tsx`
+(wejście raz na sesję, bez cookies, tylko na domenie produkcyjnej). Domyślnie woła `/track.php`;
+inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w `server/track.php`.
