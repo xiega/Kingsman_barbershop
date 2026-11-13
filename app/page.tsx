@@ -23,6 +23,9 @@ import googleData from "./google-reviews.json";
 const HERO_PHOTO = "photo-1599351431202-1e0f0137899a";
 
 /** Zdjęcie zespołu jest pokazywane, gdy plik istnieje w public/img/team. */
+/** Każda karta ma inny kształt opisu: skosy w przeciwległych rogach i wcięta zakładka. */
+const BIO_SHAPES = ["bio-a", "bio-b", "bio-c"];
+
 function hasTeamPhoto(slug: string): boolean {
   return existsSync(join(process.cwd(), "public", "img", "team", `${slug}-400.webp`));
 }
@@ -40,7 +43,10 @@ function SectionHeading({
 }) {
   return (
     <div data-reveal className={`mb-12 max-w-2xl md:mb-16 ${center ? "mx-auto text-center" : ""}`}>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-gold">{eyebrow}</p>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+        <span aria-hidden="true" className="neon-dash" />
+        {eyebrow}
+      </p>
       <h2 className="font-display text-3xl leading-tight text-bone md:text-5xl">{title}</h2>
       <div aria-hidden="true" className={`barber-pole mt-5 h-1.5 w-20 opacity-80 ${center ? "mx-auto" : ""}`} />
       {intro &&<p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{intro}</p>}
@@ -186,6 +192,10 @@ export default function Home() {
             <div
               aria-hidden="true"
               className="micro-pulse shape-diamond absolute h-60 w-60 bg-gold/10 md:h-80 md:w-80"
+            />
+            <div
+              aria-hidden="true"
+              className="neon-flicker neon-glow absolute h-44 w-44 rotate-45 border-2 border-neon md:h-60 md:w-60"
             />
             <div
               aria-hidden="true"
@@ -437,7 +447,7 @@ export default function Home() {
                     <span aria-hidden="true" className="team-bracket bottom-3 left-3 border-b-2 border-l-2" />
 
                     <div className="pointer-events-none absolute inset-x-8 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-gold">
-                      <span>KM / {num}</span>
+                      <span className="neon-text">KM / {num}</span>
                       <span>{member.role}</span>
                     </div>
                     <div className="pointer-events-none absolute inset-x-5 bottom-5">
@@ -447,11 +457,13 @@ export default function Home() {
                   </div>
 
                   {member.bio && (
-                    <div className="flex-1 border border-t-0 border-gold/20 bg-surface/80 p-5">
-                      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-gold/80">
-                        {"// profil"}
-                      </p>
-                      <p className="whitespace-pre-line text-[15px] leading-relaxed text-bone/75">{member.bio}</p>
+                    <div className={`bio ${BIO_SHAPES[index % BIO_SHAPES.length]} mt-3 flex-1`}>
+                      <div className={`h-full bg-surface p-5 ${index % BIO_SHAPES.length === 2 ? "pt-8" : ""} ${index % BIO_SHAPES.length === 1 ? "pl-8" : ""}`}>
+                        <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-gold/80">
+                          {"// profil"}
+                        </p>
+                        <p className="whitespace-pre-line text-[15px] leading-relaxed text-bone/75">{member.bio}</p>
+                      </div>
                     </div>
                   )}
                 </article>
@@ -527,7 +539,8 @@ export default function Home() {
       <div aria-hidden="true" className="barber-pole h-2 w-full opacity-60" />
 
       {/* ============ KONTAKT / STOPKA ============ */}
-      <footer id="contact" className="scroll-mt-20 border-t border-white/10 bg-black px-5 pb-10 pt-20 md:px-8">
+      <footer id="contact" className="relative scroll-mt-20 bg-black px-5 pb-10 pt-20 md:px-8">
+        <div aria-hidden="true" className="neon-bar absolute inset-x-0 top-0" />
         <div className="mx-auto grid max-w-6xl gap-12 border-b border-white/10 pb-14 md:grid-cols-2 lg:grid-cols-[1.1fr_1.5fr_1.2fr_1fr]">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}

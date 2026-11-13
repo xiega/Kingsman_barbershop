@@ -7,6 +7,7 @@
   --gold-light: #e3c987;
   --bone: #ede9e1;
   --muted: #9a958c;
+  --neon: #ffe94a;
   color-scheme: dark;
 }
 
@@ -17,6 +18,7 @@
   --color-gold-light: var(--gold-light);
   --color-bone: var(--bone);
   --color-muted: var(--muted);
+  --color-neon: var(--neon);
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
@@ -190,7 +192,8 @@ body {
   .identity-float,
   .identity-float-reverse,
   .gold-orbit,
-  .micro-pulse {
+  .micro-pulse,
+  .neon-flicker {
     animation: none;
   }
 }
@@ -265,13 +268,13 @@ body {
 
 @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   .hex-glow {
-    filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
+    filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
     transition: filter 0.5s ease;
   }
 
   .cut:hover .hex-glow,
   .hex-glow:hover {
-    filter: drop-shadow(0 0 22px rgba(201, 165, 92, 0.28)) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 0 26px rgba(201, 165, 92, 0.22)) drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
   }
 }
 
@@ -316,7 +319,8 @@ body {
   position: absolute;
   width: 18px;
   height: 18px;
-  border-color: var(--gold);
+  border-color: var(--neon);
+  filter: drop-shadow(0 0 4px rgba(255, 233, 74, 0.7));
   pointer-events: none;
 }
 
@@ -333,6 +337,85 @@ body {
   }
 
   .team-card:hover .team-bracket {
-    border-color: var(--gold-light);
+    border-color: #fff6a8;
   }
+}
+
+/* ---------- Żółty neon: akcenty (statyczne, jedno miganie tylko w opacity) ---------- */
+
+.neon-glow {
+  box-shadow:
+    0 0 6px rgba(255, 233, 74, 0.75),
+    0 0 24px rgba(255, 233, 74, 0.35),
+    inset 0 0 10px rgba(255, 233, 74, 0.25);
+}
+
+.neon-text {
+  color: var(--neon);
+  text-shadow:
+    0 0 6px rgba(255, 233, 74, 0.7),
+    0 0 18px rgba(255, 233, 74, 0.35);
+}
+
+.neon-dash {
+  display: inline-block;
+  width: 2rem;
+  height: 2px;
+  margin-right: 0.75rem;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--neon);
+  box-shadow:
+    0 0 6px rgba(255, 233, 74, 0.9),
+    0 0 14px rgba(255, 233, 74, 0.45);
+}
+
+.neon-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon) 20%, var(--neon) 80%, transparent);
+  box-shadow:
+    0 0 8px rgba(255, 233, 74, 0.8),
+    0 0 28px rgba(255, 233, 74, 0.35);
+}
+
+@keyframes neonFlicker {
+  0%,
+  44%,
+  50%,
+  56%,
+  100% {
+    opacity: 0.8;
+  }
+  47%,
+  53% {
+    opacity: 0.3;
+  }
+}
+
+.neon-flicker {
+  animation: neonFlicker 7s linear infinite;
+}
+
+/* ---------- Opisy zespołu: nietypowe kształty z cienką ramką ---------- */
+
+.bio {
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201, 165, 92, 0.75), rgba(201, 165, 92, 0.12) 55%, rgba(255, 233, 74, 0.55));
+  clip-path: var(--bio-shape);
+}
+
+.bio > div {
+  clip-path: var(--bio-shape);
+}
+
+.bio-a {
+  --bio-shape: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 28px 100%, 0 calc(100% - 28px));
+}
+
+.bio-b {
+  --bio-shape: polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px);
+}
+
+.bio-c {
+  --bio-shape: polygon(0 0, 42% 0, calc(42% + 18px) 16px, 100% 16px, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
 }
