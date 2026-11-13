@@ -58,7 +58,7 @@ async function findPlaceId() {
   });
   const match = (data.places ?? []).find((p) => /kingsman/i.test(p.displayName?.text ?? ""));
   if (!match) throw new Error("nie znaleziono wizytówki Kingsman; ustaw GOOGLE_PLACE_ID");
-  console.log(`[reviews] znaleziono: ${match.displayName.text}, ${match.formattedAddress}`);
+  console.log(`[reviews] znaleziono: ${match.displayName.text}, ${match.formattedAddress}, id ${match.id}`);
   return match.id;
 }
 
@@ -84,7 +84,12 @@ async function main() {
     const place = await api(`${BASE}/places/${encodeURIComponent(placeId)}?languageCode=pl`, {
       headers: { "X-Goog-FieldMask": "id,displayName,rating,userRatingCount,googleMapsUri,reviews" },
     });
-    const reviews = (place.reviews ?? []).map(mapReview).filter(Boolean);
+    const raw = place.reviews ?? [];
+    const reviews = raw.map(mapReview).filter(Boolean);
+    console.log(`[reviews] odpowiedź Google: ${raw.length} opinii, z treścią: ${reviews.length}; pola odpowiedzi: ${Object.keys(place).join(", ")}`);
+    if (raw.length === 0) {
+      console.warn("[reviews] Google nie zwróciło żadnych opinii dla tej wizytówki (sprawdź GOOGLE_PLACE_ID i czy to właściwa wizytówka)");
+    }
     const result = {
       fetchedAt: new Date().toISOString(),
       placeId,
