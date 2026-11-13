@@ -370,14 +370,6 @@ body {
     0 0 14px rgba(255, 233, 74, 0.45);
 }
 
-.neon-bar {
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--neon) 20%, var(--neon) 80%, transparent);
-  box-shadow:
-    0 0 8px rgba(255, 233, 74, 0.8),
-    0 0 28px rgba(255, 233, 74, 0.35);
-}
-
 @keyframes neonFlicker {
   0%,
   44%,
@@ -413,7 +405,15 @@ body {
 }
 
 .bio-b {
-  --bio-shape: polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px);
+  /* schodkowe rogi (lewy górny i prawy dolny), styl pikselowy */
+  --bio-shape: polygon(
+    0 36px, 12px 36px, 12px 24px, 24px 24px, 24px 12px, 36px 12px, 36px 0,
+    100% 0,
+    100% calc(100% - 36px), calc(100% - 12px) calc(100% - 36px), calc(100% - 12px) calc(100% - 24px),
+    calc(100% - 24px) calc(100% - 24px), calc(100% - 24px) calc(100% - 12px), calc(100% - 36px) calc(100% - 12px),
+    calc(100% - 36px) 100%,
+    0 100%
+  );
 }
 
 .bio-c {

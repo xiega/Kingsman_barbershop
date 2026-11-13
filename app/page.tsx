@@ -23,7 +23,7 @@ import googleData from "./google-reviews.json";
 const HERO_PHOTO = "photo-1599351431202-1e0f0137899a";
 
 /** Zdjęcie zespołu jest pokazywane, gdy plik istnieje w public/img/team. */
-/** Każda karta ma inny kształt opisu: skosy w przeciwległych rogach i wcięta zakładka. */
+/** Każda karta ma inny kształt opisu: skosy, schodki "piksel" i wcięta zakładka. */
 const BIO_SHAPES = ["bio-a", "bio-b", "bio-c"];
 
 function hasTeamPhoto(slug: string): boolean {
@@ -458,7 +458,7 @@ export default function Home() {
 
                   {member.bio && (
                     <div className={`bio ${BIO_SHAPES[index % BIO_SHAPES.length]} mt-3 flex-1`}>
-                      <div className={`h-full bg-surface p-5 ${index % BIO_SHAPES.length === 2 ? "pt-8" : ""} ${index % BIO_SHAPES.length === 1 ? "pl-8" : ""}`}>
+                      <div className={`h-full bg-surface p-5 ${index % BIO_SHAPES.length === 2 ? "pt-8" : ""} ${index % BIO_SHAPES.length === 1 ? "pt-9" : ""}`}>
                         <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-gold/80">
                           {"// profil"}
                         </p>
@@ -539,8 +539,7 @@ export default function Home() {
       <div aria-hidden="true" className="barber-pole h-2 w-full opacity-60" />
 
       {/* ============ KONTAKT / STOPKA ============ */}
-      <footer id="contact" className="relative scroll-mt-20 bg-black px-5 pb-10 pt-20 md:px-8">
-        <div aria-hidden="true" className="neon-bar absolute inset-x-0 top-0" />
+      <footer id="contact" className="scroll-mt-20 border-t border-white/10 bg-black px-5 pb-10 pt-20 md:px-8">
         <div className="mx-auto grid max-w-6xl gap-12 border-b border-white/10 pb-14 md:grid-cols-2 lg:grid-cols-[1.1fr_1.5fr_1.2fr_1fr]">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
