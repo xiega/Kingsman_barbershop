@@ -3,6 +3,8 @@
  * Ceny zgodne z profilem w Booksy (ceny katalogowe, bez rabatu online).
  */
 
+import defaults from "./content-defaults.json";
+
 export const BOOKING_URL =
   "https://booksy.com/pl-pl/291654_kingsman-barbershop_barber-shop_15608_poznan";
 
@@ -41,35 +43,11 @@ export type PriceGroup = {
   items: PriceItem[];
 };
 
-export const PRICE_GROUPS: PriceGroup[] = [
-  {
-    title: "Strzyżenie",
-    items: [
-      { name: "Strzyżenie włosów", price: "100", duration: "40 min" },
-      { name: "Strzyżenie włosów średniej długości", price: "120+", duration: "55 min" },
-      { name: "Tylko boki", price: "70", duration: "20 min" },
-      { name: "Strzyżenie dziecka", price: "80", duration: "30 min", note: "do 12 roku życia" },
-    ],
-  },
-  {
-    title: "Broda i pielęgnacja",
-    items: [
-      { name: "Strzyżenie brody", price: "70", duration: "30 min" },
-      { name: "Odsiwianie brody/włosów", price: "70", duration: "20 min" },
-      { name: "Depilacja woskiem", price: "25", duration: "10 min" },
-    ],
-  },
-  {
-    title: "Pakiety",
-    items: [
-      { name: "Combo", price: "140", duration: "1 godz." },
-      { name: "Combo średnie włosy", price: "180+", duration: "1 godz. 20 min" },
-      { name: "Combo + odsiwianie", price: "190", duration: "1 godz. 10 min" },
-      { name: "Ojciec + syn", price: "160", duration: "1 godz." },
-      { name: "Combo + syn", price: "210", duration: "1 godz. 30 min", note: "do 12 roku życia" },
-    ],
-  },
-];
+/**
+ * Ceny i zdjęcia galerii są w app/content-defaults.json. To wartości domyślne:
+ * na serwerze panel /admin.php zapisuje zmiany do content.json, który ma pierwszeństwo.
+ */
+export const PRICE_GROUPS: PriceGroup[] = defaults.prices;
 
 export type TeamMember = {
   /** Nazwa pliku ze zdjęciem: public/img/team/<slug>-400.webp i -800.webp */
@@ -108,12 +86,12 @@ export type Cut = {
   speed: number; // siła parallaxu na desktopie
 };
 
-export const CUTS: Cut[] = [
-  { name: "cut-1", widths: [480, 640], alt: "Fade z wygolonym wzorem na skroni, profil klienta", speed: -0.06 },
-  { name: "cut-2", widths: [480, 640], alt: "Strzyżenie męskie wykonane w Kingsman Barbershop", speed: 0.08 },
-  { name: "cut-3", widths: [480, 640], alt: "Klasyczna fryzura męska, wykończenie maszynką", speed: -0.04 },
-  { name: "cut-4", widths: [480, 800], alt: "Klasyczny zaczes do tyłu z płynnym przejściem na bokach", speed: 0.07 },
-];
+export const CUTS: Cut[] = defaults.gallery.map((g) => ({
+  name: g.base.replace(/^\/img\//, ""),
+  widths: g.widths,
+  alt: g.alt,
+  speed: g.speed,
+}));
 
 export type Review = {
   name: string;

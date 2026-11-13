@@ -7,6 +7,7 @@ import Img from "./components/Img";
 import ReviewsCarousel from "./components/ReviewsCarousel";
 import ScrollEffects from "./components/ScrollEffects";
 import Tracker from "./components/Tracker";
+import { GalleryGrid, PriceGrid } from "./components/LiveContent";
 import SiteHeader from "./components/SiteHeader";
 import {
   BOOKING_URL,
@@ -340,37 +341,7 @@ export default function Home() {
             intro="Przejrzysty cennik i czas trwania każdej usługi. Termin wybierasz online w Booksy."
           />
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {PRICE_GROUPS.map((group, index) => (
-              <div
-                key={group.title}
-                data-reveal={index === 1 ? "1" : index === 2 ? "2" : undefined}
-                className="border border-white/10 bg-surface p-6 md:p-8"
-              >
-                <h3 className="font-display text-2xl text-gold">{group.title}</h3>
-                <ul className="mt-4 divide-y divide-white/5">
-                  {group.items.map((item) => (
-                    <li key={item.name} className="py-4">
-                      <div className="flex items-baseline gap-3">
-                        <span className="min-w-0 text-[15px] text-bone">{item.name}</span>
-                        <span
-                          aria-hidden="true"
-                          className="min-w-4 flex-1 -translate-y-1 border-b border-dotted border-white/20"
-                        />
-                        <span className="whitespace-nowrap font-display text-xl text-gold">
-                          {item.price} <span className="font-sans text-xs text-muted">zł</span>
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted">
-                        {item.duration}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <PriceGrid groups={PRICE_GROUPS} />
 
           <div className="mt-10 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <p className="text-sm text-muted">Ceny z plusem („+”) to ceny od.</p>
@@ -487,30 +458,14 @@ export default function Home() {
             }
           />
 
-          <div data-parallax className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-0">
-            {CUTS.map((cut, index) => (
-              <div
-                key={cut.name}
-                data-speed={cut.speed}
-                className={`lg:-mx-3 ${index % 2 === 1 ? "lg:mt-16" : ""}`}
-              >
-                <div className="cut hex-glow">
-                  <div className="hex relative aspect-[3/4] w-full overflow-hidden bg-surface">
-                    <Img
-                      name={cut.name}
-                      widths={cut.widths}
-                      sizes="(min-width: 1024px) 300px, 46vw"
-                      width={cut.widths[cut.widths.length - 1]}
-                      height={Math.round((cut.widths[cut.widths.length - 1] * 4) / 3)}
-                      alt={cut.alt}
-                      className="cut-img absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <GalleryGrid
+            items={CUTS.map((cut) => ({
+              base: asset(`/img/${cut.name}`),
+              widths: [...cut.widths],
+              alt: cut.alt,
+              speed: cut.speed,
+            }))}
+          />
         </div>
       </section>
 

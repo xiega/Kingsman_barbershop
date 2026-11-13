@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/fetch-google-reviews.mjs",
+    "prebuild": "node scripts/fetch-google-reviews.mjs && node scripts/copy-defaults.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

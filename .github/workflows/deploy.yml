@@ -1,0 +1,56 @@
+# Buduje stronę i wgrywa ją na serwer przez FTP.
+# Uruchamia się: po każdej zmianie w gałęzi main, codziennie rano (żeby odświeżyć opinie z Google)
+# oraz ręcznie (zakładka Actions → "Build i wgranie na serwer" → Run workflow).
+#
+# Sekrety (GitHub → Settings → Secrets and variables → Actions → New repository secret):
+#   FTP_SERVER                adres serwera FTP z panelu SEOhost
+#   FTP_USERNAME              login FTP
+#   FTP_PASSWORD              hasło FTP
+#   GOOGLE_PLACES_API_KEY     klucz Google (opcjonalnie; bez niego zostają opinie z kodu)
+# Opcjonalne zmienne (zakładka Variables):
+#   FTP_DIR                   katalog na serwerze, domyślnie ./public_html/
+#   FTP_PROTOCOL              ftps (domyślnie), ftp
+#
+# Wgrywane są tylko pliki ze strony. Pliki dodane na serwerze przez Ciebie lub panel
+# (stats.php, stats.json, content.json, uploads/, admin-config.php) nie są ruszane.
+name: Build i wgranie na serwer
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build (z pobraniem opinii z Google)
+        run: npm run build
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+
+      - name: Wgraj na serwer
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./out/
+          server-dir: ${{ vars.FTP_DIR || './public_html/' }}
