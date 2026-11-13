@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { asset } from "@/lib/assets";
-import type { PriceGroup } from "../data";
+import type { PriceGroup, Review } from "../data";
 
 /**
  * Ceny i zdjęcia galerii, które właściciel zmienia w panelu /admin.php bez przebudowy strony.
@@ -21,7 +21,7 @@ export type GalleryEntry = {
   speed?: number;
 };
 
-type LiveData = { prices: PriceGroup[] | null; gallery: GalleryEntry[] | null };
+type LiveData = { prices: PriceGroup[] | null; gallery: GalleryEntry[] | null; reviews: Review[] | null };
 
 const SPEEDS = [-0.06, 0.08, -0.04, 0.07];
 
@@ -63,14 +63,29 @@ function cleanGallery(raw: unknown): GalleryEntry[] | null {
   return out;
 }
 
+function cleanReviews(raw: unknown): Review[] | null {
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > 20) return null;
+  const out: Review[] = [];
+  for (const r of raw) {
+    const name = str(r?.name, 80);
+    const text = str(r?.text, 800);
+    const date = str(r?.date, 60);
+    if (!name || !text || date === null) return null;
+    const rating = Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 5 ? (r.rating as number) : 5;
+    const url = typeof r.url === "string" && /^https:\/\/[^\s"<>]{3,300}$/.test(r.url) ? r.url : null;
+    out.push({ name, date, text, rating, url });
+  }
+  return out;
+}
+
 let pending: Promise<LiveData> | null = null;
 
-function loadLive(): Promise<LiveData> {
+export function loadLive(): Promise<LiveData> {
   if (!pending) {
     pending = fetch(`/content.json?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => ({ prices: cleanPrices(j?.prices), gallery: cleanGallery(j?.gallery) }))
-      .catch(() => ({ prices: null, gallery: null }));
+      .then((j) => ({ prices: cleanPrices(j?.prices), gallery: cleanGallery(j?.gallery), reviews: cleanReviews(j?.reviews) }))
+      .catch(() => ({ prices: null, gallery: null, reviews: null }));
   }
   return pending;
 }

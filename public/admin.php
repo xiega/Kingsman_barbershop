@@ -213,6 +213,44 @@ function sanitize_prices($raw): array
     return [$groups, $errors];
 }
 
+/** Czyści opinie z formularza. Zwraca [opinie, błędy]. */
+function sanitize_reviews($raw): array
+{
+    $out = [];
+    $errors = [];
+    foreach (is_array($raw) ? $raw : [] as $r) {
+        if (!is_array($r)) {
+            continue;
+        }
+        $name = clip((string) ($r['name'] ?? ''), 60);
+        $text = trim(preg_replace("/[ \t]+/u", ' ', str_replace("\r", '', (string) ($r['text'] ?? ''))) ?? '');
+        $text = mb_substr($text, 0, 700);
+        $date = clip((string) ($r['date'] ?? ''), 40);
+        $rating = (int) ($r['rating'] ?? 5);
+        $url = trim((string) ($r['url'] ?? ''));
+        if ($name === '' && $text === '') {
+            continue; // pusty wiersz
+        }
+        if ($name === '' || $text === '') {
+            $errors[] = 'Każda opinia musi mieć autora i treść (' . ($name ?: 'bez autora') . ').';
+            continue;
+        }
+        if ($url !== '' && !preg_match('#^https://[^\s"<>]{3,300}$#', $url)) {
+            $errors[] = 'Link przy opinii „' . $name . '” musi zaczynać się od https://.';
+            continue;
+        }
+        $item = ['name' => $name, 'date' => $date, 'text' => $text, 'rating' => max(1, min(5, $rating))];
+        if ($url !== '') {
+            $item['url'] = $url;
+        }
+        $out[] = $item;
+    }
+    if (count($out) > 12) {
+        $errors[] = 'Maksymalnie 12 opinii.';
+    }
+    return [$out, $errors];
+}
+
 /* ------------------------------------------------------------ zdjęcia */
 
 function orient($img, string $path, string $mime)
@@ -366,6 +404,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             redirect('#ceny');
 
+        case 'save_reviews':
+            [$revs, $errors] = sanitize_reviews($_POST['r'] ?? []);
+            if ($errors) {
+                foreach (array_slice($errors, 0, 5) as $e) {
+                    flash('err', $e);
+                }
+                flash('err', 'Opinie NIE zostały zapisane.');
+            } else {
+                if ($revs) {
+                    $content['reviews'] = $revs;
+                } else {
+                    unset($content['reviews']); // brak własnych opinii = wracają opinie z Google/kodu
+                }
+                if (write_content($content)) {
+                    flash('ok', $revs ? 'Opinie zapisane. Są już widoczne na stronie.' : 'Usunięto własne opinie, strona pokazuje opinie domyślne.');
+                } else {
+                    flash('err', 'Nie udało się zapisać (brak uprawnień do zapisu w katalogu strony?).');
+                }
+            }
+            redirect('#opinie');
+
         case 'upload':
             $alt = clip((string) ($_POST['alt'] ?? ''), 160) ?: DEFAULT_ALT;
             $files = $_FILES['photos'] ?? null;
@@ -480,6 +539,26 @@ function price_group_html($g, array $grp = []): string
         . '<button type="button" class="add" data-add-row="' . h((string) $g) . '">+ Dodaj usługę</button></fieldset>';
 }
 
+function review_row_html($i, array $r = []): string
+{
+    $n = "r[$i]";
+    $rating = (int) ($r['rating'] ?? 5);
+    $opts = '';
+    for ($k = 5; $k >= 1; $k--) {
+        $opts .= '<option value="' . $k . '"' . ($k === $rating ? ' selected' : '') . '>' . str_repeat('★', $k) . '</option>';
+    }
+    return '<div class="rev">'
+        . '<div class="rev-top">'
+        . '<label class="f-name">Autor<input name="' . $n . '[name]" value="' . h($r['name'] ?? '') . '" maxlength="60" placeholder="np. Jan K."></label>'
+        . '<label class="f-star">Gwiazdki<select name="' . $n . '[rating]">' . $opts . '</select></label>'
+        . '<label class="f-dur">Kiedy<input name="' . $n . '[date]" value="' . h($r['date'] ?? '') . '" maxlength="40" placeholder="np. 2 tygodnie temu"></label>'
+        . '</div>'
+        . '<label>Treść opinii<textarea name="' . $n . '[text]" rows="4" maxlength="700" placeholder="Wklej treść opinii">' . h($r['text'] ?? '') . '</textarea></label>'
+        . '<label>Link do opinii lub profilu autora (opcjonalnie)<input name="' . $n . '[url]" value="' . h($r['url'] ?? '') . '" maxlength="300" placeholder="https://..."></label>'
+        . '<button type="button" class="x" data-remove=".rev" title="Usuń opinię" aria-label="Usuń opinię">✕ usuń opinię</button>'
+        . '</div>';
+}
+
 $flashes = $_SESSION['flash'] ?? [];
 unset($_SESSION['flash']);
 $token = csrf();
@@ -518,6 +597,9 @@ $token = csrf();
   .row { display:grid; grid-template-columns: 2.4fr 1fr 1fr 1.4fr auto; gap:8px; align-items:end; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.06); }
   button.x { background:#1b1b1b; color:#ff9a9a; border:1px solid var(--line); padding:11px 12px; font-weight:500; }
   button.add { background:transparent; color:var(--gold); border:1px dashed var(--line); width:100%; }
+  .rev { border:1px solid var(--line); padding:14px; margin-bottom:14px; display:grid; gap:10px; }
+  .rev-top { display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px; }
+  textarea, select { width:100%; padding:11px; background:#171717; color:#fff; border:1px solid rgba(212,175,55,.35); font:inherit; margin-top:4px; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   .photos { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; margin: 14px 0 18px; }
   .photo { border:1px solid var(--line); padding:8px; background:#111; }
@@ -532,6 +614,7 @@ $token = csrf();
     .row { grid-template-columns: 1fr 1fr; }
     .row .f-name, .row .f-note { grid-column: 1 / -1; }
     .row button.x { grid-column: 1 / -1; }
+    .rev-top { grid-template-columns: 1fr 1fr; } .rev-top .f-name { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -622,6 +705,22 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
     <?php endif; ?>
   </section>
 
+  <!-- ============ OPINIE ============ -->
+  <section class="card" id="opinie">
+    <h2>Opinie klientów</h2>
+    <p class="hint">Opinie widoczne w sekcji „Opinie” na stronie. Skopiuj z Google (autor, gwiazdki, treść) najlepsze, maks. 12. Ocena i liczba opinii z Google nadal pobierają się same. <?= empty($content['reviews']) ? '<strong>Teraz strona pokazuje opinie domyślne</strong>; po dodaniu własnych zastąpią je.' : 'Usuń wszystkie wiersze i zapisz, żeby wrócić do opinii domyślnych.' ?></p>
+    <form method="post" id="revForm">
+      <input type="hidden" name="action" value="save_reviews">
+      <input type="hidden" name="csrf" value="<?= h($token) ?>">
+      <div id="revs">
+        <?php foreach (array_values(is_array($content['reviews'] ?? null) ? $content['reviews'] : []) as $i => $r) { echo review_row_html($i, $r); } ?>
+      </div>
+      <button type="button" class="add" id="addRev">+ Dodaj opinię</button>
+      <div class="actions"><button type="submit">Zapisz opinie</button></div>
+    </form>
+    <template id="tplRev"><?= review_row_html('__I__') ?></template>
+  </section>
+
   <?php if (is_file($BACKUP)): ?>
   <section class="card">
     <h2>Pomyłka?</h2>
@@ -662,6 +761,17 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
       var what = rm.getAttribute('data-remove') === '.group' ? 'całą grupę usług' : 'tę usługę';
       if (confirm('Usunąć ' + what + '? (zmiana zapisze się dopiero po kliknięciu „Zapisz cennik”)')) target.remove();
     }
+  });
+  var revs = document.getElementById('revs');
+  var revTpl = document.getElementById('tplRev').innerHTML;
+  document.getElementById('addRev').addEventListener('click', function () {
+    var el = html(revTpl.split('__I__').join(counter++));
+    revs.appendChild(el);
+    el.querySelector('input').focus();
+  });
+  revs.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-remove]');
+    if (rm && confirm('Usunąć tę opinię? (zmiana zapisze się po kliknięciu „Zapisz opinie”)')) rm.closest('.rev').remove();
   });
 })();
 </script>
