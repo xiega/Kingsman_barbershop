@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.php
+Disallow: /stats.php
+Disallow: /track.php
+Disallow: /uploads/
+
+Sitemap: https://kingsman-barbershop.pl/sitemap.xml

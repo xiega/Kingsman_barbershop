@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaStar } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import type { Review } from "../data";
+import { loadLive } from "./LiveContent";
 
 function scrollStep(el: HTMLDivElement, direction: 1 | -1) {
   const card = el.querySelector<HTMLElement>("[data-card]");
@@ -17,7 +18,16 @@ function scrollStep(el: HTMLDivElement, direction: 1 | -1) {
   }
 }
 
-export default function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
+export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[] }) {
+  // opinie dodane w panelu /admin.php (content.json) mają pierwszeństwo przed Google i kodem
+  const [reviews, setReviews] = useState(initial);
+  useEffect(() => {
+    let alive = true;
+    loadLive().then((d) => alive && d.reviews && setReviews(d.reviews));
+    return () => {
+      alive = false;
+    };
+  }, []);
   const trackRef = useRef<HTMLDivElement>(null);
   const userInteracted = useRef(false);
 
@@ -67,9 +77,9 @@ export default function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
         tabIndex={0}
         aria-label="Opinie klientów"
       >
-        {reviews.map((review) => (
+        {reviews.map((review, index) => (
           <figure
-            key={review.name + review.date}
+            key={index}
             data-card
             className="flex min-h-[260px] w-[85%] shrink-0 snap-start flex-col justify-between border border-white/10 bg-surface p-6 sm:w-[380px] md:p-7"
           >

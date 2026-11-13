@@ -116,7 +116,10 @@ inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w 
 
 `https://kingsman-barbershop.pl/admin.php` pozwala bez programowania:
 - zmieniać ceny, dodawać i usuwać usługi oraz grupy,
-- wgrywać zdjęcia do galerii sześciokątów (maks. 8), zmieniać ich kolejność i usuwać je.
+- wgrywać zdjęcia do galerii sześciokątów (maks. 8), zmieniać ich kolejność i usuwać je,
+- oglądać statystyki (wejścia, kliknięcia w Booksy, wykres 7 dni; zastępują stary `stats.php`),
+- wpisywać własne opinie klientów (maks. 12), które mają pierwszeństwo przed opiniami z Google API
+  (przydatne, gdy Google nie zwraca opinii dla wizytówki; ocena i liczba nadal idą z API).
 
 Zmiany zapisują się w `content.json` na serwerze, a strona czyta ten plik przy każdym wejściu,
 więc są widoczne od razu, bez budowania. Zdjęcia są automatycznie przycinane do 3:4 i

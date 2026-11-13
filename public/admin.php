@@ -22,6 +22,8 @@ header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'");
 
+date_default_timezone_set('Europe/Warsaw');
+
 const MAX_GALLERY = 8;
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_PIXELS = 50000000;
@@ -213,6 +215,44 @@ function sanitize_prices($raw): array
     return [$groups, $errors];
 }
 
+/** Czyści opinie z formularza. Zwraca [opinie, błędy]. */
+function sanitize_reviews($raw): array
+{
+    $out = [];
+    $errors = [];
+    foreach (is_array($raw) ? $raw : [] as $r) {
+        if (!is_array($r)) {
+            continue;
+        }
+        $name = clip((string) ($r['name'] ?? ''), 60);
+        $text = trim(preg_replace("/[ \t]+/u", ' ', str_replace("\r", '', (string) ($r['text'] ?? ''))) ?? '');
+        $text = mb_substr($text, 0, 700);
+        $date = clip((string) ($r['date'] ?? ''), 40);
+        $rating = (int) ($r['rating'] ?? 5);
+        $url = trim((string) ($r['url'] ?? ''));
+        if ($name === '' && $text === '') {
+            continue; // pusty wiersz
+        }
+        if ($name === '' || $text === '') {
+            $errors[] = 'Każda opinia musi mieć autora i treść (' . ($name ?: 'bez autora') . ').';
+            continue;
+        }
+        if ($url !== '' && !preg_match('#^https://[^\s"<>]{3,300}$#', $url)) {
+            $errors[] = 'Link przy opinii „' . $name . '” musi zaczynać się od https://.';
+            continue;
+        }
+        $item = ['name' => $name, 'date' => $date, 'text' => $text, 'rating' => max(1, min(5, $rating))];
+        if ($url !== '') {
+            $item['url'] = $url;
+        }
+        $out[] = $item;
+    }
+    if (count($out) > 12) {
+        $errors[] = 'Maksymalnie 12 opinii.';
+    }
+    return [$out, $errors];
+}
+
 /* ------------------------------------------------------------ zdjęcia */
 
 function orient($img, string $path, string $mime)
@@ -366,6 +406,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             redirect('#ceny');
 
+        case 'save_reviews':
+            [$revs, $errors] = sanitize_reviews($_POST['r'] ?? []);
+            if ($errors) {
+                foreach (array_slice($errors, 0, 5) as $e) {
+                    flash('err', $e);
+                }
+                flash('err', 'Opinie NIE zostały zapisane.');
+            } else {
+                if ($revs) {
+                    $content['reviews'] = $revs;
+                } else {
+                    unset($content['reviews']); // brak własnych opinii = wracają opinie z Google/kodu
+                }
+                if (write_content($content)) {
+                    flash('ok', $revs ? 'Opinie zapisane. Są już widoczne na stronie.' : 'Usunięto własne opinie, strona pokazuje opinie domyślne.');
+                } else {
+                    flash('err', 'Nie udało się zapisać (brak uprawnień do zapisu w katalogu strony?).');
+                }
+            }
+            redirect('#opinie');
+
         case 'upload':
             $alt = clip((string) ($_POST['alt'] ?? ''), 160) ?: DEFAULT_ALT;
             $files = $_FILES['photos'] ?? null;
@@ -480,6 +541,64 @@ function price_group_html($g, array $grp = []): string
         . '<button type="button" class="add" data-add-row="' . h((string) $g) . '">+ Dodaj usługę</button></fieldset>';
 }
 
+/** Dane licznika z stats.json (zapisuje je track.php). */
+function load_stats(string $file): array
+{
+    $st = read_json($file) ?? [];
+    $hist = is_array($st['history'] ?? null) && count($st['history']) === 7
+        ? array_map('intval', array_values($st['history']))
+        : array_fill(0, 7, 0);
+    $today = strtotime(date('Y-m-d'));
+    $last = isset($st['last_date']) ? strtotime((string) $st['last_date']) : $today;
+    $shift = (int) max(0, min(7, round(($today - ($last ?: $today)) / 86400)));
+    if ($shift > 0) { // dni bez wejść: wykres przesuwa się o tyle dni
+        $hist = array_merge(array_slice($hist, $shift), array_fill(0, $shift, 0));
+    }
+    $labels = [];
+    for ($i = 0; $i < 7; $i++) {
+        $labels[] = date('j.m', strtotime('-' . (6 - $i) . ' days'));
+    }
+    return ['visits' => (int) ($st['visits'] ?? 0), 'clicks' => (int) ($st['clicks'] ?? 0), 'hist' => $hist, 'labels' => $labels];
+}
+
+function stats_chart_svg(array $vals, array $labels): string
+{
+    $w = 600; $hgt = 190; $top = 22; $bottom = 28; $max = max(1, ...$vals);
+    $plot = $hgt - $top - $bottom; $slot = $w / 7; $bar = $slot * 0.56;
+    $out = '<svg viewBox="0 0 ' . $w . ' ' . $hgt . '" role="img" aria-label="Wejścia z ostatnich 7 dni" style="width:100%;height:auto;display:block">';
+    $out .= '<line x1="0" y1="' . ($hgt - $bottom) . '" x2="' . $w . '" y2="' . ($hgt - $bottom) . '" stroke="rgba(255,255,255,.12)"/>';
+    foreach ($vals as $i => $v) {
+        $bh = $plot * $v / $max;
+        $x = $slot * $i + ($slot - $bar) / 2;
+        $y = $hgt - $bottom - $bh;
+        $out .= '<rect x="' . round($x, 1) . '" y="' . round($y, 1) . '" width="' . round($bar, 1) . '" height="' . round(max($bh, $v > 0 ? 2 : 0), 1) . '" fill="#d4af37" opacity=".85"/>';
+        $out .= '<text x="' . round($x + $bar / 2, 1) . '" y="' . round($y - 6, 1) . '" fill="#d1d5db" font-size="13" text-anchor="middle">' . $v . '</text>';
+        $out .= '<text x="' . round($x + $bar / 2, 1) . '" y="' . ($hgt - 8) . '" fill="#8b8f98" font-size="12" text-anchor="middle">' . h($labels[$i]) . '</text>';
+    }
+    return $out . '</svg>';
+}
+
+function review_row_html($i, array $r = []): string
+{
+    $n = "r[$i]";
+    $rating = (int) ($r['rating'] ?? 5);
+    $opts = '';
+    for ($k = 5; $k >= 1; $k--) {
+        $opts .= '<option value="' . $k . '"' . ($k === $rating ? ' selected' : '') . '>' . str_repeat('★', $k) . '</option>';
+    }
+    return '<div class="rev">'
+        . '<div class="rev-top">'
+        . '<label class="f-name">Autor<input name="' . $n . '[name]" value="' . h($r['name'] ?? '') . '" maxlength="60" placeholder="np. Jan K."></label>'
+        . '<label class="f-star">Gwiazdki<select name="' . $n . '[rating]">' . $opts . '</select></label>'
+        . '<label class="f-dur">Kiedy<input name="' . $n . '[date]" value="' . h($r['date'] ?? '') . '" maxlength="40" placeholder="np. 2 tygodnie temu"></label>'
+        . '</div>'
+        . '<label>Treść opinii<textarea name="' . $n . '[text]" rows="4" maxlength="700" placeholder="Wklej treść opinii">' . h($r['text'] ?? '') . '</textarea></label>'
+        . '<label>Link do opinii lub profilu autora (opcjonalnie)<input name="' . $n . '[url]" value="' . h($r['url'] ?? '') . '" maxlength="300" placeholder="https://..."></label>'
+        . '<button type="button" class="x" data-remove=".rev" title="Usuń opinię" aria-label="Usuń opinię">✕ usuń opinię</button>'
+        . '</div>';
+}
+
+$stats = $loggedIn ? load_stats($ROOT . '/stats.json') : null;
 $flashes = $_SESSION['flash'] ?? [];
 unset($_SESSION['flash']);
 $token = csrf();
@@ -518,6 +637,14 @@ $token = csrf();
   .row { display:grid; grid-template-columns: 2.4fr 1fr 1fr 1.4fr auto; gap:8px; align-items:end; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.06); }
   button.x { background:#1b1b1b; color:#ff9a9a; border:1px solid var(--line); padding:11px 12px; font-weight:500; }
   button.add { background:transparent; color:var(--gold); border:1px dashed var(--line); width:100%; }
+  .rev { border:1px solid var(--line); padding:14px; margin-bottom:14px; display:grid; gap:10px; }
+  .rev-top { display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px; }
+  textarea, select { width:100%; padding:11px; background:#171717; color:#fff; border:1px solid rgba(212,175,55,.35); font:inherit; margin-top:4px; }
+  .stat-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:12px; }
+  .stat { background:#111; border:1px solid rgba(255,255,255,.06); padding:14px; text-align:center; }
+  .stat-l { display:block; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); }
+  .stat-n { display:block; font-size:2rem; font-weight:700; color:var(--gold); margin-top:6px; }
+  .chart { margin-top:18px; background:#111; border:1px solid rgba(255,255,255,.06); padding:14px; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   .photos { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; margin: 14px 0 18px; }
   .photo { border:1px solid var(--line); padding:8px; background:#111; }
@@ -529,9 +656,11 @@ $token = csrf();
   code { background:#171717; padding:2px 6px; }
   pre { background:#171717; padding:12px; overflow:auto; }
   @media (max-width: 720px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
     .row { grid-template-columns: 1fr 1fr; }
     .row .f-name, .row .f-note { grid-column: 1 / -1; }
     .row button.x { grid-column: 1 / -1; }
+    .rev-top { grid-template-columns: 1fr 1fr; } .rev-top .f-name { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -567,6 +696,19 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
       <form method="post" style="margin:0"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="<?= h($token) ?>"><button class="sec" type="submit">Wyloguj</button></form>
     </div>
   </div>
+
+  <!-- ============ STATYSTYKI ============ -->
+  <section class="card" id="statystyki">
+    <h2>Statystyki</h2>
+    <div class="stat-grid">
+      <div class="stat"><span class="stat-l">Wejścia na stronę</span><span class="stat-n"><?= number_format($stats['visits'], 0, ',', ' ') ?></span></div>
+      <div class="stat"><span class="stat-l">Kliknięcia w Booksy</span><span class="stat-n"><?= number_format($stats['clicks'], 0, ',', ' ') ?></span></div>
+      <div class="stat"><span class="stat-l">Ostatnie 7 dni</span><span class="stat-n"><?= array_sum($stats['hist']) ?></span></div>
+      <div class="stat"><span class="stat-l">Klik w Booksy / wejścia</span><span class="stat-n"><?= $stats['visits'] > 0 ? round(100 * $stats['clicks'] / $stats['visits']) . '%' : '–' ?></span></div>
+    </div>
+    <div class="chart"><?= stats_chart_svg($stats['hist'], $stats['labels']) ?></div>
+    <p class="hint">Wejście liczy się raz na sesję przeglądarki, boty są pomijane. Wykres jest dokładny od momentu wgrania nowego skryptu licznika.</p>
+  </section>
 
   <!-- ============ CENY ============ -->
   <section class="card" id="ceny">
@@ -622,6 +764,22 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
     <?php endif; ?>
   </section>
 
+  <!-- ============ OPINIE ============ -->
+  <section class="card" id="opinie">
+    <h2>Opinie klientów</h2>
+    <p class="hint">Opinie widoczne w sekcji „Opinie” na stronie. Skopiuj z Google (autor, gwiazdki, treść) najlepsze, maks. 12. Ocena i liczba opinii z Google nadal pobierają się same. <?= empty($content['reviews']) ? '<strong>Teraz strona pokazuje opinie domyślne</strong>; po dodaniu własnych zastąpią je.' : 'Usuń wszystkie wiersze i zapisz, żeby wrócić do opinii domyślnych.' ?></p>
+    <form method="post" id="revForm">
+      <input type="hidden" name="action" value="save_reviews">
+      <input type="hidden" name="csrf" value="<?= h($token) ?>">
+      <div id="revs">
+        <?php foreach (array_values(is_array($content['reviews'] ?? null) ? $content['reviews'] : []) as $i => $r) { echo review_row_html($i, $r); } ?>
+      </div>
+      <button type="button" class="add" id="addRev">+ Dodaj opinię</button>
+      <div class="actions"><button type="submit">Zapisz opinie</button></div>
+    </form>
+    <template id="tplRev"><?= review_row_html('__I__') ?></template>
+  </section>
+
   <?php if (is_file($BACKUP)): ?>
   <section class="card">
     <h2>Pomyłka?</h2>
@@ -662,6 +820,17 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
       var what = rm.getAttribute('data-remove') === '.group' ? 'całą grupę usług' : 'tę usługę';
       if (confirm('Usunąć ' + what + '? (zmiana zapisze się dopiero po kliknięciu „Zapisz cennik”)')) target.remove();
     }
+  });
+  var revs = document.getElementById('revs');
+  var revTpl = document.getElementById('tplRev').innerHTML;
+  document.getElementById('addRev').addEventListener('click', function () {
+    var el = html(revTpl.split('__I__').join(counter++));
+    revs.appendChild(el);
+    el.querySelector('input').focus();
+  });
+  revs.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-remove]');
+    if (rm && confirm('Usunąć tę opinię? (zmiana zapisze się po kliknięciu „Zapisz opinie”)')) rm.closest('.rev').remove();
   });
 })();
 </script>
