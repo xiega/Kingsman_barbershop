@@ -58,3 +58,29 @@ Domyślnie zdjęcia ładują się z własnego serwera. Żeby przenieść je na C
 Wszystkie zdjęcia (oprócz `og.jpg`, które musi zostać na domenie strony) przejdą wtedy na CDN.
 Zmienna jest wkompilowywana podczas builda, więc działa też przy eksporcie statycznym.
 Bez zmiennej nic się nie zmienia.
+
+## Opinie z Google
+
+Strona potrafi pobierać prawdziwą ocenę i opinie z Google (Places API). Dzieje się to
+automatycznie przed każdym `npm run build` (hook `prebuild`), a wynik trafia do
+`app/google-reviews.json`. Dopóki nie ustawisz klucza, strona pokazuje opinie z `app/data.ts`.
+
+1. W Google Cloud Console włącz **Places API (New)** i utwórz klucz API (ogranicz go do tego jednego API).
+2. Przed buildem ustaw zmienną środowiskową:
+
+   ```bash
+   GOOGLE_PLACES_API_KEY=twój_klucz
+   # opcjonalnie, jeśli skrypt miałby nie trafić w wizytówkę:
+   GOOGLE_PLACE_ID=ChIJ...
+   ```
+
+3. `npm run build` (albo samo `npm run fetch-reviews`, żeby sprawdzić pobieranie).
+
+Dobre do wiedzenia:
+
+- Google oddaje przez API **maksymalnie 5 opinii** (wybranych przez Google) oraz łączną ocenę i liczbę ocen.
+  Pełnej listy nie da się pobrać oficjalnie.
+- Opinie odświeżają się przy każdym buildzie, więc przy hostingu statycznym warto budować stronę
+  cyklicznie (np. raz dziennie).
+- Błąd API nigdy nie przerywa builda: zostaje poprzedni plik albo opinie z `app/data.ts`.
+- Przy opiniach z Google strona pokazuje logo Google i link do profilu autora, tak jak wymagają zasady Google.

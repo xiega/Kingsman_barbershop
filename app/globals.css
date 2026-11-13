@@ -130,27 +130,6 @@ body {
   }
 }
 
-@keyframes identityScan {
-  0%,
-  100% {
-    transform: translate3d(0, -110%, 0);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.55;
-  }
-  55% {
-    opacity: 0.3;
-  }
-  75% {
-    opacity: 0;
-  }
-  100% {
-    transform: translate3d(0, 310%, 0);
-    opacity: 0;
-  }
-}
-
 @keyframes microPulse {
   0%,
   100% {
@@ -173,10 +152,6 @@ body {
 
 .gold-orbit {
   animation: goldOrbit 12s linear infinite;
-}
-
-.identity-scan {
-  animation: identityScan 7s ease-in-out infinite;
 }
 
 .micro-pulse {
@@ -215,7 +190,6 @@ body {
   .identity-float,
   .identity-float-reverse,
   .gold-orbit,
-  .identity-scan,
   .micro-pulse {
     animation: none;
   }
@@ -285,4 +259,80 @@ body {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ---------- Galeria sześciokątów: bez ramki, delikatny cień tylko na desktopie ---------- */
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .hex-glow {
+    filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
+    transition: filter 0.5s ease;
+  }
+
+  .cut:hover .hex-glow,
+  .hex-glow:hover {
+    filter: drop-shadow(0 0 22px rgba(201, 165, 92, 0.28)) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.5));
+  }
+}
+
+/* ---------- Zespół: karta operatora (styl HUD) ---------- */
+/* Wszystko statyczne: żadnych animacji spadających z góry na dół. */
+
+.team-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(201, 165, 92, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 165, 92, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 75%);
+}
+
+.team-photo {
+  filter: grayscale(0.25) contrast(1.06) saturate(0.9);
+}
+
+.team-tone {
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 24%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.2) 42%, rgba(201, 165, 92, 0.12) 100%);
+}
+
+/* drobne poziome linie maskują artefakty kompresji i dają efekt ekranu */
+.team-lines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.045) 0,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.team-bracket {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--gold);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .team-photo {
+    transition:
+      filter 0.5s ease,
+      transform 0.7s ease;
+  }
+
+  .team-card:hover .team-photo {
+    filter: none;
+    transform: scale(1.04);
+  }
+
+  .team-card:hover .team-bracket {
+    border-color: var(--gold-light);
+  }
 }

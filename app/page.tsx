@@ -16,7 +16,9 @@ import {
   REVIEWS,
   SITE_URL,
   TEAM,
+  type GoogleReviewsData,
 } from "./data";
+import googleData from "./google-reviews.json";
 
 const HERO_PHOTO = "photo-1599351431202-1e0f0137899a";
 
@@ -46,6 +48,25 @@ function SectionHeading({
   );
 }
 
+/** Dane z Google (app/google-reviews.json, generowane przy buildzie). Bez nich zostają opinie z data.ts. */
+const google = googleData as GoogleReviewsData;
+const hasLiveReviews = google.reviews.length > 0;
+const reviews = hasLiveReviews ? google.reviews : REVIEWS;
+const ratingShort = google.rating ? google.rating.toFixed(1).replace(".", ",") : "5,0";
+const reviewsUrl = google.mapsUri ?? CONTACT.googleReviewsUrl;
+
+function opinionsLabel(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) return "opinia";
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "opinie";
+  return "opinii";
+}
+
+const ratingIntro = google.rating
+  ? `Ocena ${ratingShort} / 5 w Google${google.count ? ` · ${google.count} ${opinionsLabel(google.count)}` : ""}.`
+  : "Ocena 5,0 / 5 w Google.";
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BarberShop",
@@ -71,6 +92,15 @@ const jsonLd = {
     { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "07:00", closes: "16:00" },
   ],
   sameAs: [CONTACT.instagramUrl, BOOKING_URL],
+  ...(google.rating && google.count
+    ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: google.rating,
+          reviewCount: google.count,
+        },
+      }
+    : {}),
 };
 
 export default function Home() {
@@ -127,7 +157,7 @@ export default function Home() {
 
           <ul className="mt-12 flex flex-wrap gap-x-8 gap-y-3 text-sm text-bone/70">
             <li className="flex items-center gap-2">
-              <FaStar className="text-gold" aria-hidden="true" /> 5,0 w Google
+              <FaStar className="text-gold" aria-hidden="true" /> {ratingShort} w Google
             </li>
             <li className="flex items-center gap-2">
               <FaMapMarkerAlt className="text-gold" aria-hidden="true" /> {CONTACT.street}, {CONTACT.district}
@@ -223,11 +253,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* skan światła i znak środka kompozycji */}
-              <div
-                aria-hidden="true"
-                className="identity-scan pointer-events-none absolute inset-x-[8%] top-0 z-30 h-1/3 bg-gradient-to-b from-transparent via-gold/20 to-transparent"
-              />
+              {/* znak środka kompozycji */}
               <div
                 aria-hidden="true"
                 className="micro-pulse absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/30 bg-black/60 md:h-20 md:w-20"
@@ -272,7 +298,7 @@ export default function Home() {
             <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
               <div>
                 <dt className="text-[11px] uppercase tracking-[0.2em] text-muted">Ocena Google</dt>
-                <dd className="mt-1 font-display text-2xl text-gold md:text-3xl">5,0</dd>
+                <dd className="mt-1 font-display text-2xl text-gold md:text-3xl">{ratingShort}</dd>
               </div>
               <div>
                 <dt className="text-[11px] uppercase tracking-[0.2em] text-muted">Otwarte</dt>
@@ -349,67 +375,89 @@ export default function Home() {
       </section>
 
       {/* ============ ZESPÓŁ ============ */}
-      <section id="team" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 md:px-8 md:py-28">
-        <SectionHeading
-          eyebrow="Zespół"
-          title={
-            <>
-              Ludzie za <span className="text-gold">fotelem</span>
-            </>
-          }
-          intro="Poznaj osoby, które zadbają o Twój styl."
-        />
+      <section id="team" className="team-grid relative scroll-mt-20 overflow-hidden py-20 md:py-28">
+        <div className="relative z-10 mx-auto max-w-6xl px-5 md:px-8">
+          <SectionHeading
+            eyebrow="Zespół"
+            title={
+              <>
+                Ludzie za <span className="text-gold">fotelem</span>
+              </>
+            }
+            intro="Poznaj osoby, które zadbają o Twój styl."
+          />
 
-        <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {TEAM.map((member, index) => {
-            const photo = hasTeamPhoto(member.slug);
-            return (
-              <article
-                key={member.slug}
-                data-reveal={index === 1 ? "1" : index === 2 ? "2" : undefined}
-              >
-                <div
-                  className={`cut-corner relative overflow-hidden border border-white/10 bg-surface ${
-                    photo ? "aspect-[4/5]" : "aspect-[16/9] sm:aspect-[4/5]"
-                  }`}
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {TEAM.map((member, index) => {
+              const photo = hasTeamPhoto(member.slug);
+              const num = String(index + 1).padStart(2, "0");
+              return (
+                <article
+                  key={member.slug}
+                  data-reveal={index === 1 ? "1" : index === 2 ? "2" : undefined}
+                  className="team-card flex flex-col"
                 >
-                  {photo ? (
-                    <Img
-                      name={`team/${member.slug}`}
-                      widths={[400, 800]}
-                      sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
-                      width={800}
-                      height={800}
-                      alt={`${member.name}, ${member.role} w Kingsman Barbershop`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-[#161616] to-black">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={asset("/img/logo-full-480.webp")}
-                        srcSet={imgSrcSet("logo-full", [480, 966])}
-                        sizes="200px"
-                        width={200}
-                        height={51}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        className="w-40 opacity-30"
+                  <div
+                    className={`cut-corner relative overflow-hidden bg-black ${
+                      photo ? "aspect-[4/5]" : "aspect-[16/9] sm:aspect-[4/5]"
+                    }`}
+                  >
+                    {photo ? (
+                      <Img
+                        name={`team/${member.slug}`}
+                        widths={[400, 800]}
+                        sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
+                        width={800}
+                        height={800}
+                        alt={`${member.name}, ${member.role} w Kingsman Barbershop`}
+                        className="team-photo h-full w-full object-cover"
                       />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-[#161616] to-black">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={asset("/img/logo-full-480.webp")}
+                          srcSet={imgSrcSet("logo-full", [480, 966])}
+                          sizes="200px"
+                          width={200}
+                          height={51}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="w-40 opacity-30"
+                        />
+                      </div>
+                    )}
+
+                    {/* ton, linie i narożniki HUD: statyczne, bez ruchu */}
+                    <div aria-hidden="true" className="team-tone pointer-events-none absolute inset-0" />
+                    <div aria-hidden="true" className="team-lines pointer-events-none absolute inset-0" />
+                    <span aria-hidden="true" className="team-bracket left-3 top-3 border-l-2 border-t-2" />
+                    <span aria-hidden="true" className="team-bracket right-3 top-3 border-r-2 border-t-2" />
+                    <span aria-hidden="true" className="team-bracket bottom-3 left-3 border-b-2 border-l-2" />
+
+                    <div className="pointer-events-none absolute inset-x-8 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-gold">
+                      <span>KM / {num}</span>
+                      <span>{member.role}</span>
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-5 bottom-5">
+                      <h3 className="font-display text-3xl text-bone">{member.name}</h3>
+                      <div aria-hidden="true" className="barber-pole mt-3 h-1 w-16 opacity-90" />
+                    </div>
+                  </div>
+
+                  {member.bio && (
+                    <div className="flex-1 border border-t-0 border-gold/20 bg-surface/80 p-5">
+                      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-gold/80">
+                        {"// profil"}
+                      </p>
+                      <p className="whitespace-pre-line text-[15px] leading-relaxed text-bone/75">{member.bio}</p>
                     </div>
                   )}
-                </div>
-                <div className="mt-5">
-                  <h3 className="font-display text-2xl text-bone">{member.name}</h3>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.25em] text-gold">{member.role}</p>
-                  {member.bio && (
-                    <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-muted">{member.bio}</p>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -432,8 +480,8 @@ export default function Home() {
                 data-speed={cut.speed}
                 className={`lg:-mx-3 ${index % 2 === 1 ? "lg:mt-16" : ""}`}
               >
-                <div className="cut hex aspect-[3/4] w-full bg-gold p-[2px]">
-                  <div className="hex relative h-full w-full overflow-hidden bg-black">
+                <div className="cut hex-glow">
+                  <div className="hex relative aspect-[3/4] w-full overflow-hidden bg-surface">
                     <Img
                       name={cut.name}
                       widths={cut.widths}
@@ -443,6 +491,7 @@ export default function Home() {
                       alt={cut.alt}
                       className="cut-img absolute inset-0 h-full w-full object-cover"
                     />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                   </div>
                 </div>
               </div>
@@ -460,12 +509,12 @@ export default function Home() {
               Co mówią <span className="text-gold">klienci</span>
             </>
           }
-          intro="Ocena 5,0 / 5 w Google."
+          intro={ratingIntro}
         />
-        <ReviewsCarousel reviews={REVIEWS} />
+        <ReviewsCarousel reviews={reviews} />
         <div className="mt-8">
           <a
-            href={CONTACT.googleReviewsUrl}
+            href={reviewsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium uppercase tracking-[0.18em] text-gold underline underline-offset-8 transition-colors hover:text-gold-light"

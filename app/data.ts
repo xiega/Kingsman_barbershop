@@ -119,6 +119,20 @@ export type Review = {
   name: string;
   date: string;
   text: string;
+  /** 1-5; domyślnie 5 (opinie statyczne) */
+  rating?: number;
+  /** link do profilu autora w Google (atrybucja wymagana przez Google) */
+  url?: string | null;
+};
+
+/** Kształt pliku app/google-reviews.json, który zapisuje scripts/fetch-google-reviews.mjs */
+export type GoogleReviewsData = {
+  fetchedAt?: string;
+  placeId?: string;
+  rating?: number;
+  count?: number;
+  mapsUri?: string;
+  reviews: Review[];
 };
 
 export const REVIEWS: Review[] = [

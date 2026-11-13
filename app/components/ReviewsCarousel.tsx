@@ -75,14 +75,18 @@ export default function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
           >
             <div>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div className="flex gap-1 text-xs text-gold" aria-label="Ocena 5 na 5">
+                <div className="flex gap-1 text-xs" aria-label={`Ocena ${review.rating ?? 5} na 5`}>
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <FaStar key={i} aria-hidden="true" />
+                    <FaStar
+                      key={i}
+                      aria-hidden="true"
+                      className={i < (review.rating ?? 5) ? "text-gold" : "text-white/15"}
+                    />
                   ))}
                 </div>
                 <span className="text-[11px] uppercase tracking-[0.15em] text-muted">{review.date}</span>
               </div>
-              <blockquote className="font-display text-[17px] leading-relaxed text-bone/90">
+              <blockquote className="line-clamp-6 font-display text-[17px] leading-relaxed text-bone/90">
                 „{review.text}”
               </blockquote>
             </div>
@@ -94,7 +98,18 @@ export default function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
                 >
                   {review.name.charAt(0)}
                 </span>
-                <span className="text-sm font-medium text-bone">{review.name}</span>
+                {review.url ? (
+                  <a
+                    href={review.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="text-sm font-medium text-bone transition-colors hover:text-gold"
+                  >
+                    {review.name}
+                  </a>
+                ) : (
+                  <span className="text-sm font-medium text-bone">{review.name}</span>
+                )}
               </div>
               <FcGoogle className="text-2xl opacity-70" aria-label="Opinia z Google" />
             </figcaption>
