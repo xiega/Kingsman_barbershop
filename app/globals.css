@@ -1,26 +1,124 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0a0a0a;
+  --surface: #121212;
+  --gold: #c9a55c;
+  --gold-light: #e3c987;
+  --bone: #ede9e1;
+  --muted: #9a958c;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-bone: var(--bone);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--gold);
+  color: #000;
+}
+
+/* ---------- Kształty (charakterystyczne "cięcia" marki) ---------- */
+
+.hex {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.slant-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% 94%, 0 100%);
+}
+
+.cut-corner {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
+}
+
+/* ---------- Pojawianie się sekcji ---------- */
+/* Ukrywamy tylko gdy JS jest włączony i użytkownik nie wyłączył animacji,
+   dzięki czemu treść nigdy nie zostaje niewidoczna. */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    transition:
+      opacity 0.7s ease,
+      transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-reveal="1"] {
+    transition-delay: 0.1s;
+  }
+
+  [data-reveal="2"] {
+    transition-delay: 0.2s;
+  }
+}
+
+/* ---------- Galeria: efekty tylko tam, gdzie mają sens ---------- */
+/* Na telefonach: zero parallaxu, zero filtrów i zero hovera,
+   bo to one powodowały przycinanie przy przewijaniu. */
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  [data-speed] {
+    transform: translate3d(0, var(--py, 0px), 0);
+    will-change: transform;
+  }
+
+  .cut-img {
+    filter: grayscale(1) brightness(0.85);
+    transition:
+      filter 0.5s ease,
+      transform 0.6s ease;
+  }
+
+  .cut:hover .cut-img {
+    filter: none;
+    transform: scale(1.06);
+  }
+
+  .cut:hover {
+    position: relative;
+    z-index: 10;
+  }
+}
+
+/* ---------- Karuzela opinii ---------- */
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

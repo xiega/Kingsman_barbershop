@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kingsman Barbershop
 
-## Getting Started
-
-First, run the development server:
+Strona barbershopu: Next.js (App Router) + Tailwind CSS 4.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Gdzie co zmieniać
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Co | Plik |
+|---|---|
+| Cennik, godziny, telefon, link do Booksy, zespół, opinie | `app/data.ts` |
+| Układ i teksty sekcji | `app/page.tsx` |
+| Kolory, fonty, animacje | `app/globals.css` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Ceny są skopiowane z profilu w Booksy (ceny katalogowe). Cena z plusem (`120+`) oznacza „od”.
 
-## Learn More
+## Zdjęcia
 
-To learn more about Next.js, take a look at the following resources:
+Oryginały leżą w `source-images/` (nie trafiają na serwer). Strona używa lekkich
+wersji WebP z `public/img/`, generowanych skryptem:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pip install pillow
+python3 scripts/optimize-images.py
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Skrypt tworzy kilka rozmiarów każdego zdjęcia (`<nazwa>-480.webp`, `-800.webp` itd.),
+a przeglądarka sama wybiera właściwy do ekranu (`srcset`), dzięki czemu telefon nie
+pobiera obrazów w rozmiarze dla desktopu. Zdjęcia poniżej ekranu startowego ładują się
+leniwie.
 
-## Deploy on Vercel
+### Zdjęcia zespołu
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Wrzuć oryginał do `source-images/team/` pod nazwą z `slug` z `app/data.ts`
+   (`julita.jpg`, `kacper.jpg`, `wojtek.jpg`). Najlepiej pionowe, proporcje ok. 4:5.
+2. Uruchom `python3 scripts/optimize-images.py`.
+3. Wpisz opis w polu `bio` w `app/data.ts`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dopóki zdjęcia nie ma, karta pokazuje neutralną zaślepkę z logo. Pusty `bio` nie wyświetla się wcale.
+Nową osobę dodajesz jednym wpisem w tablicy `TEAM`.
+
+## CDN
+
+Domyślnie zdjęcia ładują się z własnego serwera. Żeby przenieść je na CDN
+(np. Cloudflare R2, Bunny, KeyCDN):
+
+1. Wgraj zawartość `public/img/` na CDN tak, żeby pliki były pod `<adres CDN>/img/...`.
+2. Przed `npm run build` ustaw zmienną środowiskową:
+
+   ```bash
+   NEXT_PUBLIC_CDN_URL=https://cdn.kingsman-barbershop.pl
+   ```
+
+Wszystkie zdjęcia (oprócz `og.jpg`, które musi zostać na domenie strony) przejdą wtedy na CDN.
+Zmienna jest wkompilowywana podczas builda, więc działa też przy eksporcie statycznym.
+Bez zmiennej nic się nie zmienia.

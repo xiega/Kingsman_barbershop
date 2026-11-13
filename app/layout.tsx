@@ -1,36 +1,51 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
+import { CDN_ORIGIN } from "@/lib/assets";
+import { SITE_URL } from "./data";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// "latin-ext" jest konieczny dla polskich znaków (ą, ć, ę, ł, ń, ó, ś, ź, ż).
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Kingsman Barbershop Poznań | Najlepszy Barber na Wildzie",
-  description: "Klasyczny barbershop na poznańskiej Wildzie (ul. Różana 6). Rzemiosło, nienaganny styl i profesjonalne strzyżenie. Zarezerwuj wizytę przez Booksy.",
-  keywords: "barber poznań, barbershop wilda, strzyżenie męskie poznań, trymowanie brody, kingsman barber poznań",
+  metadataBase: new URL(SITE_URL),
+  title: "Kingsman Barbershop Poznań | Barber na Wildzie",
+  description:
+    "Klasyczny barbershop na poznańskiej Wildzie (ul. Różana 6). Strzyżenie męskie, trymowanie brody i pakiety combo. Zarezerwuj wizytę online przez Booksy.",
+  keywords:
+    "barber poznań, barbershop wilda, strzyżenie męskie poznań, trymowanie brody, kingsman barber poznań",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Kingsman Barbershop Poznań",
-    description: "Klasyczny barbershop na poznańskiej Wildzie. Wejdź do bazy i stwórz swoją tożsamość.",
-    url: "https://kingsmanbarbershop.pl", // Zmień na swoją domenę, jak już ją wykupisz
+    description: "Klasyczny barbershop na poznańskiej Wildzie. Strzyżenie, broda, pakiety combo.",
+    url: "/",
     siteName: "Kingsman Barbershop",
-    images: [
-      {
-        url: "/logo_szerokie.png",
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Kingsman Barbershop Poznań" }],
     locale: "pl_PL",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kingsman Barbershop Poznań",
+    description: "Klasyczny barbershop na poznańskiej Wildzie.",
+    images: ["/og.jpg"],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
@@ -39,11 +54,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="pl"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="pl" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        {CDN_ORIGIN && <link rel="preconnect" href={CDN_ORIGIN} crossOrigin="anonymous" />}
+      </head>
+      <body className="bg-ink font-sans text-bone antialiased">{children}</body>
     </html>
   );
 }
