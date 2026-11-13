@@ -104,3 +104,10 @@ Panel `https://kingsman-barbershop.pl/stats.php` żyje na serwerze, poza eksport
 Strona zgłasza wejścia i kliknięcia w Booksy komponentem `app/components/Tracker.tsx`
 (wejście raz na sesję, bez cookies, tylko na domenie produkcyjnej). Domyślnie woła `/track.php`;
 inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w `server/track.php`.
+
+## Wdrożenie na zwykły hosting (np. SEOhost)
+
+1. Opcjonalnie `.env.local` z `GOOGLE_PLACES_API_KEY` (opinie z Google).
+2. `npm install`, potem `npm run build`. Powstaje folder `out/` z gotową stroną.
+3. Wgraj **zawartość** folderu `out/` do głównego katalogu strony (zwykle `public_html`).
+4. Nie kasuj na serwerze `stats.php`, `track.php` i `stats.json` (licznik). `server/track.php` wgrywasz raz.
