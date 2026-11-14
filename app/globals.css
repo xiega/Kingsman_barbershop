@@ -264,18 +264,15 @@ body {
   display: none;
 }
 
-/* ---------- Galeria sześciokątów: bez ramki, delikatny cień tylko na desktopie ---------- */
+/* ---------- Galeria sześciokątów: bez cienia, styl HUD (drobne linie i znacznik) ---------- */
 
-@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
-  .hex-glow {
-    filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
-    transition: filter 0.5s ease;
-  }
+.hex-hud {
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+}
 
-  .cut:hover .hex-glow,
-  .hex-glow:hover {
-    filter: drop-shadow(0 0 26px rgba(201, 165, 92, 0.22)) drop-shadow(0 28px 48px rgba(0, 0, 0, 0.22));
-  }
+.hex-tag {
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 
 /* ---------- Zespół: karta operatora (styl HUD) ---------- */
@@ -412,4 +409,64 @@ body {
 
 .bio-c {
   --bio-shape: polygon(0 0, 42% 0, calc(42% + 18px) 16px, 100% 16px, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
+}
+
+/* ---------- Kropka statusu Otwarte / Zamknięte ---------- */
+
+.status-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+}
+
+.status-dot-open {
+  background: var(--neon);
+  box-shadow:
+    0 0 6px var(--neon),
+    0 0 14px rgba(255, 233, 74, 0.7),
+    0 0 26px rgba(255, 233, 74, 0.35);
+}
+
+.status-dot-closed {
+  background: #9a9a9a;
+  box-shadow:
+    0 0 6px rgba(190, 190, 190, 0.7),
+    0 0 14px rgba(190, 190, 190, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-dot-open {
+    animation: dotPulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 6px var(--neon),
+      0 0 14px rgba(255, 233, 74, 0.7),
+      0 0 26px rgba(255, 233, 74, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 3px var(--neon),
+      0 0 8px rgba(255, 233, 74, 0.45),
+      0 0 14px rgba(255, 233, 74, 0.15);
+  }
+}
+
+/* ---------- Karty opinii ---------- */
+
+.review {
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
+
+@media (hover: hover) {
+  .review:hover {
+    transform: translateY(-3px);
+  }
 }
