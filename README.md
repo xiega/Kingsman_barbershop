@@ -112,6 +112,20 @@ inny adres ustawisz w `NEXT_PUBLIC_TRACK_URL`. Poprawiona wersja skryptu jest w 
 3. Wgraj **zawartość** folderu `out/` do głównego katalogu strony (zwykle `public_html`).
 4. Nie kasuj na serwerze `stats.php`, `track.php` i `stats.json` (licznik). `public/track.php` wgrywasz raz.
 
+## Wersja angielska, zespół, godziny i pasek komunikatu
+
+- Strona istnieje w dwóch językach: polska (`/`) i angielska (`/en/`). Oba są renderowane z jednego komponentu
+  `app/components/SitePage.tsx`; teksty interfejsu są w `app/i18n.ts`. W nagłówku jest przełącznik PL/EN,
+  `public/sitemap.xml` zawiera oba adresy z `hreflang`.
+- Domyślny zespół, godziny, komunikat i angielskie tłumaczenia cen są w `app/content-defaults.json`.
+  Panel `/admin.php` zapisuje zmiany w `content.json`, które mają pierwszeństwo (bez przebudowy strony):
+  **Pasek komunikatu** (domyślnie ukryty, z opcjonalną datą końca i linkiem), **Godziny otwarcia**
+  (na ich podstawie liczy się neonowy znaczek „Otwarte teraz / Zamknięte” i lista w stopce),
+  **Zespół** (imię, rola, opis PL/EN, zdjęcie przycinane do 4:5) oraz pola EN w cenniku.
+- Puste pole EN = na angielskiej wersji pokazuje się tekst polski.
+- Dane strukturalne (JSON-LD) biorą godziny z `content-defaults.json`; zmiana godzin w panelu ich nie aktualizuje.
+- `next.config.mjs` ma `trailingSlash: true`, żeby `/en/` trafiało do `en/index.html`.
+
 ## Panel dla właściciela: ceny i zdjęcia galerii (admin.php)
 
 `https://kingsman-barbershop.pl/admin.php` pozwala bez programowania:

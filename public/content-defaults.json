@@ -3,35 +3,222 @@
     {
       "title": "Strzyżenie",
       "items": [
-        { "name": "Strzyżenie włosów", "price": "100", "duration": "40 min" },
-        { "name": "Strzyżenie włosów średniej długości", "price": "120+", "duration": "55 min" },
-        { "name": "Tylko boki", "price": "70", "duration": "20 min" },
-        { "name": "Strzyżenie dziecka", "price": "80", "duration": "30 min", "note": "do 12 roku życia" }
-      ]
+        {
+          "name": "Strzyżenie włosów",
+          "price": "100",
+          "duration": "40 min",
+          "name_en": "Haircut"
+        },
+        {
+          "name": "Strzyżenie włosów średniej długości",
+          "price": "120+",
+          "duration": "55 min",
+          "name_en": "Medium-length haircut"
+        },
+        {
+          "name": "Tylko boki",
+          "price": "70",
+          "duration": "20 min",
+          "name_en": "Sides only"
+        },
+        {
+          "name": "Strzyżenie dziecka",
+          "price": "80",
+          "duration": "30 min",
+          "note": "do 12 roku życia",
+          "name_en": "Kid's haircut",
+          "note_en": "up to 12 years old"
+        }
+      ],
+      "title_en": "Haircuts"
     },
     {
       "title": "Broda i pielęgnacja",
       "items": [
-        { "name": "Strzyżenie brody", "price": "70", "duration": "30 min" },
-        { "name": "Odsiwianie brody/włosów", "price": "70", "duration": "20 min" },
-        { "name": "Depilacja woskiem", "price": "25", "duration": "10 min" }
-      ]
+        {
+          "name": "Strzyżenie brody",
+          "price": "70",
+          "duration": "30 min",
+          "name_en": "Beard trim"
+        },
+        {
+          "name": "Odsiwianie brody/włosów",
+          "price": "70",
+          "duration": "20 min",
+          "name_en": "Grey blending (beard/hair)"
+        },
+        {
+          "name": "Depilacja woskiem",
+          "price": "25",
+          "duration": "10 min",
+          "name_en": "Wax hair removal"
+        }
+      ],
+      "title_en": "Beard & grooming"
     },
     {
       "title": "Pakiety",
       "items": [
-        { "name": "Combo", "price": "140", "duration": "1 godz." },
-        { "name": "Combo średnie włosy", "price": "180+", "duration": "1 godz. 20 min" },
-        { "name": "Combo + odsiwianie", "price": "190", "duration": "1 godz. 10 min" },
-        { "name": "Ojciec + syn", "price": "160", "duration": "1 godz." },
-        { "name": "Combo + syn", "price": "210", "duration": "1 godz. 30 min", "note": "do 12 roku życia" }
-      ]
+        {
+          "name": "Combo",
+          "price": "140",
+          "duration": "1 godz.",
+          "name_en": "Combo"
+        },
+        {
+          "name": "Combo średnie włosy",
+          "price": "180+",
+          "duration": "1 godz. 20 min",
+          "name_en": "Combo, medium-length hair"
+        },
+        {
+          "name": "Combo + odsiwianie",
+          "price": "190",
+          "duration": "1 godz. 10 min",
+          "name_en": "Combo + grey blending"
+        },
+        {
+          "name": "Ojciec + syn",
+          "price": "160",
+          "duration": "1 godz.",
+          "name_en": "Father + son"
+        },
+        {
+          "name": "Combo + syn",
+          "price": "210",
+          "duration": "1 godz. 30 min",
+          "note": "do 12 roku życia",
+          "name_en": "Combo + son",
+          "note_en": "up to 12 years old"
+        }
+      ],
+      "title_en": "Packages"
     }
   ],
   "gallery": [
-    { "id": "cut-1", "base": "/img/cut-1", "widths": [480, 640], "alt": "Fade z wygolonym wzorem na skroni, profil klienta", "speed": -0.06 },
-    { "id": "cut-2", "base": "/img/cut-2", "widths": [480, 640], "alt": "Strzyżenie męskie wykonane w Kingsman Barbershop", "speed": 0.08 },
-    { "id": "cut-3", "base": "/img/cut-3", "widths": [480, 640], "alt": "Klasyczna fryzura męska, wykończenie maszynką", "speed": -0.04 },
-    { "id": "cut-4", "base": "/img/cut-4", "widths": [480, 800], "alt": "Klasyczny zaczes do tyłu z płynnym przejściem na bokach", "speed": 0.07 }
-  ]
+    {
+      "id": "cut-1",
+      "base": "/img/cut-1",
+      "widths": [
+        480,
+        640
+      ],
+      "alt": "Fade z wygolonym wzorem na skroni, profil klienta",
+      "speed": -0.06,
+      "alt_en": "Fade with a shaved pattern on the temple, client profile"
+    },
+    {
+      "id": "cut-2",
+      "base": "/img/cut-2",
+      "widths": [
+        480,
+        640
+      ],
+      "alt": "Strzyżenie męskie wykonane w Kingsman Barbershop",
+      "speed": 0.08,
+      "alt_en": "Men's haircut by Kingsman Barbershop"
+    },
+    {
+      "id": "cut-3",
+      "base": "/img/cut-3",
+      "widths": [
+        480,
+        640
+      ],
+      "alt": "Klasyczna fryzura męska, wykończenie maszynką",
+      "speed": -0.04,
+      "alt_en": "Classic men's hairstyle, finished with clippers"
+    },
+    {
+      "id": "cut-4",
+      "base": "/img/cut-4",
+      "widths": [
+        480,
+        800
+      ],
+      "alt": "Klasyczny zaczes do tyłu z płynnym przejściem na bokach",
+      "speed": 0.07,
+      "alt_en": "Classic slicked-back style with a smooth fade on the sides"
+    }
+  ],
+  "hours": {
+    "mon": [
+      "07:00",
+      "16:00"
+    ],
+    "tue": [
+      "07:00",
+      "16:00"
+    ],
+    "wed": [
+      "07:00",
+      "16:00"
+    ],
+    "thu": [
+      "07:00",
+      "16:00"
+    ],
+    "fri": [
+      "07:00",
+      "20:00"
+    ],
+    "sat": [
+      "07:00",
+      "16:00"
+    ],
+    "sun": null
+  },
+  "team": [
+    {
+      "id": "julita",
+      "name": "Julita",
+      "role": "Barber",
+      "role_en": "Barber",
+      "bio": "Dietetykiem nie jest, ale ma duże zamiłowanie do brokułów 🥦. Jeśli jeździsz na Kukirinie lub słuchasz Okekela, koniecznie wpadnij na jej fotel 🤤🤤",
+      "bio_en": "Not a dietitian, but she has a big love for broccoli 🥦. If you ride a Kukirin or listen to Okekel, be sure to take a seat in her chair 🤤🤤",
+      "photo": {
+        "base": "/img/team/julita",
+        "widths": [
+          400,
+          800
+        ]
+      }
+    },
+    {
+      "id": "kacper",
+      "name": "Kacper",
+      "role": "Barber",
+      "role_en": "Barber",
+      "bio": "Kacper, inaczej grubson 🎤. Ciężki humor, debaty polityczne? Nie ma znaczenia, z nim każdy temat może być poruszony 😎 Ulubione strzyżenia? Każde 🥸. Nie ma znaczenia, z czym przyjdziesz na głowie, zawsze będzie ugotowane 🤤. Jestem tego pewny, w głębi duszy o tym wiem, że gdzieś na Różanej wszyscy razem spotkamy się ⛰️",
+      "bio_en": "Kacper, a.k.a. Grubson 🎤. Dark humor, political debates? Doesn't matter, with him any topic is fair game 😎 Favourite cuts? All of them 🥸. No matter what you walk in with on your head, it will always be cooked 🤤. I'm sure of it, deep down I know that somewhere on Różana we will all meet ⛰️",
+      "photo": {
+        "base": "/img/team/kacper",
+        "widths": [
+          400,
+          800
+        ]
+      }
+    },
+    {
+      "id": "wojtek",
+      "name": "Wojtek",
+      "role": "Barber",
+      "role_en": "Barber",
+      "bio": "Nasz polsko-turecki wojownik zaprasza na fotel 💺\nŚrednio mówi po polsku, jeszcze gorzej po turecku 😩\nJedno jest pewne: zrobi strzyżenie lepiej niż twoja osiedlowa fryzjerka 💇 Buyrun 🇹🇷😆",
+      "bio_en": "Our Polish-Turkish warrior invites you to his chair 💺\nHis Polish is so-so, his Turkish even worse 😩\nOne thing is certain: he'll give you a better haircut than your neighbourhood hairdresser 💇 Buyrun 🇹🇷😆",
+      "photo": {
+        "base": "/img/team/wojtek",
+        "widths": [
+          400,
+          800
+        ]
+      }
+    }
+  ],
+  "announcement": {
+    "enabled": false,
+    "text": "",
+    "text_en": "",
+    "until": ""
+  }
 }
