@@ -255,7 +255,7 @@ export function GalleryGrid({ items: initial, lang = "pl" }: { items: GalleryEnt
             data-speed={cut.speed ?? SPEEDS[index % SPEEDS.length]}
             className={`lg:-mx-3 ${index % 2 === 1 ? "lg:mt-16" : ""}`}
           >
-            <div className="cut hex-glow">
+            <div className="cut">
               <div className="hex relative aspect-[3/4] w-full overflow-hidden bg-surface">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -269,7 +269,14 @@ export function GalleryGrid({ items: initial, lang = "pl" }: { items: GalleryEnt
                   decoding="async"
                   className="cut-img absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                <div aria-hidden="true" className="hex-hud pointer-events-none absolute inset-0" />
+                <span
+                  aria-hidden="true"
+                  className="hex-tag pointer-events-none absolute bottom-[17%] left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.3em] text-gold-light"
+                >
+                  CUT / {String(index + 1).padStart(2, "0")}
+                </span>
               </div>
             </div>
           </div>

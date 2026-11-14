@@ -89,7 +89,7 @@ export default function ReviewsCarousel({ reviews: initial, lang = "pl" }: { rev
                         <FaStar
                           key={i}
                           aria-hidden="true"
-                          className={i < (review.rating ?? 5) ? "text-neon drop-shadow-[0_0_4px_rgba(255,233,74,0.55)]" : "text-white/15"}
+                          className={i < (review.rating ?? 5) ? "text-gold" : "text-white/15"}
                         />
                       ))}
                     </div>
@@ -103,7 +103,7 @@ export default function ReviewsCarousel({ reviews: initial, lang = "pl" }: { rev
                   <div className="flex items-center gap-3">
                     <span
                       aria-hidden="true"
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/50 bg-black font-semibold text-gold shadow-[0_0_12px_rgba(201,165,92,0.25)]"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/50 bg-black font-semibold text-gold"
                     >
                       {review.name.charAt(0)}
                     </span>
