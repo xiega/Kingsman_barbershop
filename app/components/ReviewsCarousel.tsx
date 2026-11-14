@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { FaArrowLeft, FaArrowRight, FaStar } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import type { Review } from "../data";
-import { loadLive } from "./LiveContent";
+import { DICT, type Lang } from "../i18n";
+import { useLive } from "./LiveContent";
 
 function scrollStep(el: HTMLDivElement, direction: 1 | -1) {
   const card = el.querySelector<HTMLElement>("[data-card]");
@@ -18,16 +19,10 @@ function scrollStep(el: HTMLDivElement, direction: 1 | -1) {
   }
 }
 
-export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[] }) {
+export default function ReviewsCarousel({ reviews: initial, lang = "pl" }: { reviews: Review[]; lang?: Lang }) {
   // opinie dodane w panelu /admin.php (content.json) mają pierwszeństwo przed Google i kodem
-  const [reviews, setReviews] = useState(initial);
-  useEffect(() => {
-    let alive = true;
-    loadLive().then((d) => alive && d.reviews && setReviews(d.reviews));
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const reviews = useLive((d) => d.reviews, initial);
+  const t = DICT[lang].reviews;
   const trackRef = useRef<HTMLDivElement>(null);
   const userInteracted = useRef(false);
 
@@ -53,7 +48,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
         <button
           type="button"
           onClick={() => manual(-1)}
-          aria-label="Poprzednie opinie"
+          aria-label={t.prev}
           className="flex h-12 w-12 items-center justify-center border border-gold/40 text-gold transition-colors hover:bg-gold hover:text-black"
         >
           <FaArrowLeft />
@@ -61,7 +56,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
         <button
           type="button"
           onClick={() => manual(1)}
-          aria-label="Następne opinie"
+          aria-label={t.next}
           className="flex h-12 w-12 items-center justify-center border border-gold/40 text-gold transition-colors hover:bg-gold hover:text-black"
         >
           <FaArrowRight />
@@ -75,7 +70,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
         }}
         className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 md:-mx-8 md:px-8"
         tabIndex={0}
-        aria-label="Opinie klientów"
+        aria-label={t.list}
       >
         {reviews.map((review, index) => (
           <figure
@@ -85,7 +80,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
           >
             <div>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div className="flex gap-1 text-xs" aria-label={`Ocena ${review.rating ?? 5} na 5`}>
+                <div className="flex gap-1 text-xs" aria-label={t.stars(review.rating ?? 5)}>
                   {[0, 1, 2, 3, 4].map((i) => (
                     <FaStar
                       key={i}
@@ -97,7 +92,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
                 <span className="text-[11px] uppercase tracking-[0.15em] text-muted">{review.date}</span>
               </div>
               <blockquote className="line-clamp-6 font-display text-[17px] leading-relaxed text-bone/90">
-                „{review.text}”
+                {lang === "en" ? `“${review.text}”` : `„${review.text}”`}
               </blockquote>
             </div>
             <figcaption className="mt-6 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
@@ -121,7 +116,7 @@ export default function ReviewsCarousel({ reviews: initial }: { reviews: Review[
                   <span className="text-sm font-medium text-bone">{review.name}</span>
                 )}
               </div>
-              <FcGoogle className="text-2xl opacity-70" aria-label="Opinia z Google" />
+              <FcGoogle className="text-2xl opacity-70" aria-label={t.google} />
             </figcaption>
           </figure>
         ))}

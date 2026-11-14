@@ -2,7 +2,8 @@
 /**
  * Panel zarządzania treścią strony Kingsman Barbershop.
  *  - ceny: dodawanie, edycja i usuwanie usług oraz grup,
- *  - galeria sześciokątów: wgrywanie zdjęć (przycinane i zmniejszane automatycznie), kolejność, usuwanie.
+ *  - galeria sześciokątów: wgrywanie zdjęć (przycinane i zmniejszane automatycznie), kolejność, usuwanie,
+ *  - zespół (imię, rola, opis PL/EN, zdjęcie), godziny otwarcia, pasek komunikatu, teksty angielskie.
  *
  * Zapisuje content.json (czytany przez stronę przy każdym wejściu, więc zmiany są widoczne od razu,
  * bez budowania strony) oraz zdjęcia w uploads/gallery/.
@@ -28,12 +29,16 @@ const MAX_GALLERY = 8;
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_PIXELS = 50000000;
 const DEFAULT_ALT = 'Strzyżenie wykonane w Kingsman Barbershop';
+const MAX_TEAM = 8;
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const DAY_LABELS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
 
 $ROOT = __DIR__;
 $CONTENT = $ROOT . '/content.json';
 $BACKUP = $ROOT . '/content.backup.json';
 $DEFAULTS = $ROOT . '/content-defaults.json';
 $UPLOADS = $ROOT . '/uploads/gallery';
+$UPLOADS_TEAM = $ROOT . '/uploads/team';
 $CFG_FILE = $ROOT . '/admin-config.php';
 
 /* ------------------------------------------------------------ sesja */
@@ -154,6 +159,9 @@ $defaults = read_json($DEFAULTS) ?? ['prices' => [], 'gallery' => []];
 $content = read_json($CONTENT) ?? [];
 $prices = is_array($content['prices'] ?? null) ? $content['prices'] : ($defaults['prices'] ?? []);
 $gallery = is_array($content['gallery'] ?? null) ? $content['gallery'] : ($defaults['gallery'] ?? []);
+$team = is_array($content['team'] ?? null) ? $content['team'] : ($defaults['team'] ?? []);
+$hours = is_array($content['hours'] ?? null) ? $content['hours'] : ($defaults['hours'] ?? []);
+$announcement = is_array($content['announcement'] ?? null) ? $content['announcement'] : ($defaults['announcement'] ?? []);
 
 function clip(string $s, int $max): string
 {
@@ -171,6 +179,7 @@ function sanitize_prices($raw): array
             continue;
         }
         $title = clip((string) ($g['title'] ?? ''), 40);
+        $titleEn = clip((string) ($g['title_en'] ?? ''), 40);
         $items = [];
         foreach (is_array($g['items'] ?? null) ? $g['items'] : [] as $it) {
             if (!is_array($it)) {
@@ -180,6 +189,8 @@ function sanitize_prices($raw): array
             $price = str_replace([' ', 'zł', 'PLN'], '', clip((string) ($it['price'] ?? ''), 12));
             $duration = clip((string) ($it['duration'] ?? ''), 30);
             $note = clip((string) ($it['note'] ?? ''), 60);
+            $nameEn = clip((string) ($it['name_en'] ?? ''), 80);
+            $noteEn = clip((string) ($it['note_en'] ?? ''), 60);
             if ($name === '' && $price === '' && $duration === '' && $note === '') {
                 continue; // pusty wiersz
             }
@@ -192,8 +203,8 @@ function sanitize_prices($raw): array
                 continue;
             }
             $items[] = array_filter(
-                ['name' => $name, 'price' => $price, 'duration' => $duration, 'note' => $note],
-                static fn ($v, $k) => $k !== 'note' || $v !== '',
+                ['name' => $name, 'price' => $price, 'duration' => $duration, 'note' => $note, 'name_en' => $nameEn, 'note_en' => $noteEn],
+                static fn ($v, $k) => !in_array($k, ['note', 'name_en', 'note_en'], true) || $v !== '',
                 ARRAY_FILTER_USE_BOTH
             );
         }
@@ -207,7 +218,7 @@ function sanitize_prices($raw): array
         if (!$items) {
             continue; // pusta grupa jest pomijana
         }
-        $groups[] = ['title' => $title, 'items' => $items];
+        $groups[] = array_filter(['title' => $title, 'title_en' => $titleEn, 'items' => $items], static fn ($v, $k) => $k !== 'title_en' || $v !== '', ARRAY_FILTER_USE_BOTH);
     }
     if (!$groups) {
         $errors[] = 'Cennik musi zawierać co najmniej jedną usługę.';
@@ -253,6 +264,58 @@ function sanitize_reviews($raw): array
     return [$out, $errors];
 }
 
+/** Godziny otwarcia z formularza. Zwraca [godziny, błędy]. */
+function sanitize_hours($raw): array
+{
+    $out = [];
+    $errors = [];
+    $time = '/^([01]\d|2[0-3]):[0-5]\d$/';
+    foreach (DAY_KEYS as $i => $k) {
+        $d = is_array($raw[$k] ?? null) ? $raw[$k] : [];
+        if (!empty($d['closed'])) {
+            $out[$k] = null;
+            continue;
+        }
+        $o = trim((string) ($d['open'] ?? ''));
+        $c = trim((string) ($d['close'] ?? ''));
+        if (!preg_match($time, $o) || !preg_match($time, $c)) {
+            $errors[] = DAY_LABELS[$i] . ': wpisz godzinę otwarcia i zamknięcia albo zaznacz „zamknięte”.';
+            continue;
+        }
+        if ($o >= $c) {
+            $errors[] = DAY_LABELS[$i] . ': zamknięcie musi być później niż otwarcie.';
+            continue;
+        }
+        $out[$k] = [$o, $c];
+    }
+    return [$out, $errors];
+}
+
+/** Pasek komunikatu z formularza. Zwraca [komunikat, błędy]. */
+function sanitize_announcement($raw): array
+{
+    $a = is_array($raw) ? $raw : [];
+    $errors = [];
+    $enabled = !empty($a['enabled']);
+    $text = clip((string) ($a['text'] ?? ''), 200);
+    $textEn = clip((string) ($a['text_en'] ?? ''), 200);
+    $until = trim((string) ($a['until'] ?? ''));
+    $url = trim((string) ($a['url'] ?? ''));
+    if ($until !== '') {
+        $ok = preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $until, $m) && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+        if (!$ok) {
+            $errors[] = 'Data „Pokazuj do” jest nieprawidłowa.';
+        }
+    }
+    if ($url !== '' && !preg_match('#^https://[^\s"<>]{3,300}$#', $url)) {
+        $errors[] = 'Link na pasku musi zaczynać się od https://.';
+    }
+    if ($enabled && $text === '' && $textEn === '') {
+        $errors[] = 'Wpisz treść komunikatu albo wyłącz pasek.';
+    }
+    return [['enabled' => $enabled, 'text' => $text, 'text_en' => $textEn, 'until' => $until, 'url' => $url], $errors];
+}
+
 /* ------------------------------------------------------------ zdjęcia */
 
 function orient($img, string $path, string $mime)
@@ -272,8 +335,11 @@ function orient($img, string $path, string $mime)
     return $img;
 }
 
-/** Zapisuje zdjęcie jako dwa pliki WebP 3:4 (480 i 800 px). Zwraca id albo tekst błędu. */
-function save_gallery_photo(string $tmp, string $dir): array
+/**
+ * Zapisuje zdjęcie jako pliki WebP w podanych rozmiarach, przycięte do proporcji $rw:$rh.
+ * $sizes: [[szerokość, wysokość], ...] od największego. Zwraca [id, błąd].
+ */
+function save_photo(string $tmp, string $dir, array $sizes, int $rw, int $rh, bool $sharpen = false): array
 {
     $info = @getimagesize($tmp);
     if (!$info) {
@@ -300,15 +366,15 @@ function save_gallery_photo(string $tmp, string $dir): array
     $src = orient($src, $tmp, $mime);
     $w = imagesx($src);
     $hgt = imagesy($src);
-    // kadr 3:4; przy zdjęciach pionowych przycinamy bardziej od dołu (twarz zwykle jest wyżej)
-    if ($w / $hgt > 3 / 4) {
-        $cw = (int) round($hgt * 3 / 4);
+    // kadr rw:rh; przy zdjęciach pionowych przycinamy bardziej od dołu (twarz zwykle jest wyżej)
+    if ($w / $hgt > $rw / $rh) {
+        $cw = (int) round($hgt * $rw / $rh);
         $ch = $hgt;
         $cx = (int) (($w - $cw) / 2);
         $cy = 0;
     } else {
         $cw = $w;
-        $ch = (int) round($w * 4 / 3);
+        $ch = (int) round($w * $rh / $rw);
         $cx = 0;
         $cy = (int) (($hgt - $ch) * 0.3);
     }
@@ -321,11 +387,14 @@ function save_gallery_photo(string $tmp, string $dir): array
     }
     $id = bin2hex(random_bytes(6));
     $written = [];
-    foreach ([800 => 1067, 480 => 640] as $tw => $th) {
+    foreach ($sizes as [$tw, $th]) {
         $dst = imagecreatetruecolor($tw, $th);
         imagecopyresampled($dst, $src, 0, 0, $cx, $cy, $tw, $th, $cw, $ch);
+        if ($sharpen && function_exists('imageconvolution')) {
+            @imageconvolution($dst, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]], 8, 0); // delikatne wyostrzenie po zmniejszeniu
+        }
         $file = "$dir/$id-$tw.webp";
-        $ok = imagewebp($dst, $file, 82);
+        $ok = imagewebp($dst, $file, $sharpen ? 86 : 82);
         imagedestroy($dst);
         if (!$ok) {
             foreach ($written as $f) {
@@ -337,6 +406,105 @@ function save_gallery_photo(string $tmp, string $dir): array
     }
     imagedestroy($src);
     return [$id, null];
+}
+
+/** Zdjęcie galerii: dwa pliki WebP 3:4 (480 i 800 px). */
+function save_gallery_photo(string $tmp, string $dir): array
+{
+    return save_photo($tmp, $dir, [[800, 1067], [480, 640]], 3, 4);
+}
+
+/** Zdjęcie członka zespołu: dwa pliki WebP 4:5 (400 i 800 px), lekko wyostrzone. */
+function save_team_photo(string $tmp, string $dir): array
+{
+    return save_photo($tmp, $dir, [[800, 1000], [400, 500]], 4, 5, true);
+}
+
+/** Usuwa wgrane (nie domyślne) pliki zdjęcia o podanej ścieżce bazowej, np. /uploads/team/ab12. */
+function delete_upload_files(string $base, string $prefix, string $dir): void
+{
+    if (!str_starts_with($base, $prefix) || !preg_match('#^/uploads/(gallery|team)/[A-Za-z0-9]+$#', $base)) {
+        return;
+    }
+    foreach (glob($dir . '/' . basename($base) . '-*.webp') ?: [] as $f) {
+        @unlink($f);
+    }
+}
+
+/**
+ * Zespół z formularza (+ ewentualne nowe zdjęcia). Zwraca [członkowie, błędy, ostrzeżenia].
+ * Błąd wgrania zdjęcia jest tylko ostrzeżeniem: reszta zmian się zapisuje, a stare zdjęcie zostaje.
+ */
+function process_team($raw, array $oldTeam, string $dir): array
+{
+    $members = [];
+    $errors = [];
+    $warnings = [];
+    $oldByid = [];
+    foreach ($oldTeam as $m) {
+        $oldByid[(string) ($m['id'] ?? '')] = $m;
+    }
+    foreach (is_array($raw) ? $raw : [] as $key => $m) {
+        if (!is_array($m)) {
+            continue;
+        }
+        $name = clip((string) ($m['name'] ?? ''), 40);
+        $role = clip((string) ($m['role'] ?? ''), 40);
+        $roleEn = clip((string) ($m['role_en'] ?? ''), 40);
+        $bio = trim(str_replace("\r", '', (string) ($m['bio'] ?? '')));
+        $bioEn = trim(str_replace("\r", '', (string) ($m['bio_en'] ?? '')));
+        $bio = mb_substr(preg_replace("/[ \t]+/u", ' ', $bio) ?? '', 0, 600);
+        $bioEn = mb_substr(preg_replace("/[ \t]+/u", ' ', $bioEn) ?? '', 0, 600);
+        $upload = $_FILES['photo_' . $key] ?? null;
+        $hasUpload = is_array($upload) && ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        if ($name === '' && $role === '' && $bio === '' && !$hasUpload) {
+            continue; // pusty wiersz
+        }
+        if ($name === '') {
+            $errors[] = 'Każda osoba w zespole musi mieć imię.';
+            continue;
+        }
+        $id = preg_replace('/[^a-z0-9_-]/', '', strtolower((string) ($m['id'] ?? ''))) ?: '';
+        if ($id === '') {
+            $id = 'm' . bin2hex(random_bytes(4));
+        }
+        // zdjęcie: bieżące (z ukrytego pola, tylko dozwolone ścieżki) albo nowe
+        $photoBase = (string) ($m['photo'] ?? '');
+        $photo = preg_match('#^/(img/team|uploads/team)/[A-Za-z0-9._-]+$#', $photoBase)
+            ? ['base' => $photoBase, 'widths' => [400, 800]]
+            : null;
+        if (!empty($m['remove_photo'])) {
+            $photo = null;
+        }
+        if ($hasUpload) {
+            if ($upload['error'] !== UPLOAD_ERR_OK || $upload['size'] > MAX_UPLOAD_BYTES) {
+                $warnings[] = "Zdjęcie „{$name}”: plik jest za duży albo wgranie się nie udało (maks. 15 MB). Zostało poprzednie zdjęcie.";
+            } else {
+                [$pid, $err] = save_team_photo((string) $upload['tmp_name'], $dir);
+                if ($err) {
+                    $warnings[] = "Zdjęcie „{$name}”: {$err}. Zostało poprzednie zdjęcie.";
+                } else {
+                    $photo = ['base' => '/uploads/team/' . $pid, 'widths' => [400, 800]];
+                }
+            }
+        }
+        $item = ['id' => $id, 'name' => $name, 'role' => $role !== '' ? $role : 'Barber'];
+        if ($roleEn !== '') {
+            $item['role_en'] = $roleEn;
+        }
+        if ($bio !== '') {
+            $item['bio'] = $bio;
+        }
+        if ($bioEn !== '') {
+            $item['bio_en'] = $bioEn;
+        }
+        $item['photo'] = $photo;
+        $members[] = $item;
+    }
+    if (count($members) > MAX_TEAM) {
+        $errors[] = 'Maksymalnie ' . MAX_TEAM . ' osób w zespole.';
+    }
+    return [$members, $errors, $warnings];
 }
 
 function delete_gallery_files(array $item, string $dir): void
@@ -426,6 +594,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             redirect('#opinie');
+
+        case 'save_hours':
+            [$hrs, $errors] = sanitize_hours($_POST['hours'] ?? []);
+            if ($errors) {
+                foreach (array_slice($errors, 0, 7) as $e) {
+                    flash('err', $e);
+                }
+                flash('err', 'Godziny NIE zostały zapisane.');
+            } else {
+                $content['hours'] = $hrs;
+                flash(write_content($content) ? 'ok' : 'err', 'Godziny zapisane. Znaczek „Otwarte / Zamknięte” i stopka liczą się od nich.');
+            }
+            redirect('#godziny');
+
+        case 'save_announcement':
+            [$ann, $errors] = sanitize_announcement($_POST['ann'] ?? []);
+            if ($errors) {
+                foreach ($errors as $e) {
+                    flash('err', $e);
+                }
+                flash('err', 'Komunikat NIE został zapisany.');
+            } else {
+                $content['announcement'] = $ann;
+                flash(
+                    write_content($content) ? 'ok' : 'err',
+                    $ann['enabled'] ? 'Pasek komunikatu jest WŁĄCZONY i widoczny na stronie.' : 'Pasek komunikatu jest wyłączony (ukryty).'
+                );
+            }
+            redirect('#komunikat');
+
+        case 'save_team':
+            [$members, $errors, $warnings] = process_team($_POST['team'] ?? [], $team, $UPLOADS_TEAM);
+            if ($errors) {
+                foreach ($errors as $e) {
+                    flash('err', $e);
+                }
+                flash('err', 'Zespół NIE został zapisany.');
+            } else {
+                $oldBases = array_map(static fn ($m) => (string) ($m['photo']['base'] ?? ''), $team);
+                $newBases = array_map(static fn ($m) => (string) ($m['photo']['base'] ?? ''), $members);
+                if ($members) {
+                    $content['team'] = $members;
+                } else {
+                    unset($content['team']); // brak osób = wracają osoby domyślne
+                }
+                if (write_content($content)) {
+                    foreach (array_diff($oldBases, $newBases) as $gone) {
+                        delete_upload_files($gone, '/uploads/team/', $UPLOADS_TEAM); // tylko wgrane, nie domyślne
+                    }
+                    flash('ok', $members ? 'Zespół zapisany. Zmiany są już widoczne na stronie.' : 'Usunięto wszystkich, strona pokazuje zespół domyślny.');
+                } else {
+                    flash('err', 'Nie udało się zapisać (brak uprawnień do zapisu w katalogu strony?).');
+                }
+            }
+            foreach ($warnings as $w) {
+                flash('err', $w);
+            }
+            redirect('#zespol');
 
         case 'upload':
             $alt = clip((string) ($_POST['alt'] ?? ''), 160) ?: DEFAULT_ALT;
@@ -526,6 +752,10 @@ function price_row_html($g, $i, array $it = []): string
         . '<label class="f-dur">Czas<input name="' . $n . '[duration]" value="' . h($it['duration'] ?? '') . '" maxlength="30" placeholder="40 min"></label>'
         . '<label class="f-note">Dopisek<input name="' . $n . '[note]" value="' . h($it['note'] ?? '') . '" maxlength="60" placeholder="opcjonalnie"></label>'
         . '<button type="button" class="x" data-remove=".row" title="Usuń usługę" aria-label="Usuń usługę">✕</button>'
+        . '<div class="en-line">'
+        . '<label>EN: nazwa usługi<input name="' . $n . '[name_en]" value="' . h($it['name_en'] ?? '') . '" maxlength="80" placeholder="English name"></label>'
+        . '<label>EN: dopisek<input name="' . $n . '[note_en]" value="' . h($it['note_en'] ?? '') . '" maxlength="60" placeholder="optional"></label>'
+        . '</div>'
         . '</div>';
 }
 
@@ -536,6 +766,7 @@ function price_group_html($g, array $grp = []): string
         $rows .= price_row_html($g, $i, $it);
     }
     return '<fieldset class="group"><div class="ghead"><label class="gtitle">Nazwa grupy<input name="g[' . $g . '][title]" value="' . h($grp['title'] ?? '') . '" maxlength="40" placeholder="np. Strzyżenie"></label>'
+        . '<label class="gtitle">EN: nazwa grupy<input name="g[' . $g . '][title_en]" value="' . h($grp['title_en'] ?? '') . '" maxlength="40" placeholder="English group name"></label>'
         . '<button type="button" class="x" data-remove=".group" title="Usuń całą grupę" aria-label="Usuń grupę">✕ grupa</button></div>'
         . '<div class="rows">' . $rows . '</div>'
         . '<button type="button" class="add" data-add-row="' . h((string) $g) . '">+ Dodaj usługę</button></fieldset>';
@@ -598,6 +829,44 @@ function review_row_html($i, array $r = []): string
         . '</div>';
 }
 
+function hours_row_html(string $k, int $i, $h): string
+{
+    $closed = !is_array($h);
+    $o = $closed ? '' : (string) ($h[0] ?? '');
+    $c = $closed ? '' : (string) ($h[1] ?? '');
+    return '<div class="hrow"><span class="hday">' . h(DAY_LABELS[$i]) . '</span>'
+        . '<label>Od<input type="time" name="hours[' . $k . '][open]" value="' . h($o) . '"></label>'
+        . '<label>Do<input type="time" name="hours[' . $k . '][close]" value="' . h($c) . '"></label>'
+        . '<label class="chk"><input type="checkbox" name="hours[' . $k . '][closed]" value="1"' . ($closed ? ' checked' : '') . '> zamknięte</label></div>';
+}
+
+function team_row_html($i, array $m = []): string
+{
+    $n = "team[$i]";
+    $base = (string) ($m['photo']['base'] ?? '');
+    $thumb = $base !== '' ? '<img src="' . h($base . '-400.webp') . '" alt="">' : '<span class="nophoto">brak zdjęcia<br>(na stronie pojawi się logo)</span>';
+    return '<div class="member">'
+        . '<div class="m-photo">' . $thumb . '</div>'
+        . '<div class="m-body">'
+        . '<input type="hidden" name="' . $n . '[id]" value="' . h($m['id'] ?? '') . '">'
+        . '<input type="hidden" name="' . $n . '[photo]" value="' . h($base) . '">'
+        . '<div class="m-top">'
+        . '<label>Imię<input name="' . $n . '[name]" value="' . h($m['name'] ?? '') . '" maxlength="40" placeholder="np. Kacper"></label>'
+        . '<label>Rola (PL)<input name="' . $n . '[role]" value="' . h($m['role'] ?? 'Barber') . '" maxlength="40" placeholder="Barber"></label>'
+        . '<label>Rola (EN)<input name="' . $n . '[role_en]" value="' . h($m['role_en'] ?? '') . '" maxlength="40" placeholder="Barber"></label>'
+        . '</div>'
+        . '<label>Opis (PL), pokazywany pod zdjęciem<textarea name="' . $n . '[bio]" rows="4" maxlength="600">' . h($m['bio'] ?? '') . '</textarea></label>'
+        . '<label>Opis (EN), wersja angielska strony<textarea name="' . $n . '[bio_en]" rows="4" maxlength="600">' . h($m['bio_en'] ?? '') . '</textarea></label>'
+        . '<label>Zdjęcie (JPG, PNG, WebP) – wgraj, żeby podmienić<input type="file" name="photo_' . $i . '" accept="image/jpeg,image/png,image/webp"></label>'
+        . ($base !== '' ? '<label class="chk"><input type="checkbox" name="' . $n . '[remove_photo]" value="1"> usuń zdjęcie (zostanie logo)</label>' : '')
+        . '<div class="m-actions">'
+        . '<button type="button" class="sec" data-move="-1" title="Przesuń wyżej" aria-label="Przesuń wyżej">↑</button>'
+        . '<button type="button" class="sec" data-move="1" title="Przesuń niżej" aria-label="Przesuń niżej">↓</button>'
+        . '<button type="button" class="x" data-remove=".member" title="Usuń osobę" aria-label="Usuń osobę">✕ usuń osobę</button>'
+        . '</div>'
+        . '</div></div>';
+}
+
 $stats = $loggedIn ? load_stats($ROOT . '/stats.json') : null;
 $flashes = $_SESSION['flash'] ?? [];
 unset($_SESSION['flash']);
@@ -620,7 +889,7 @@ $token = csrf();
   .top { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0 20px; flex-wrap:wrap; }
   .card { background:var(--card); border:1px solid var(--line); padding:20px; margin-bottom:24px; }
   p.hint { color:var(--mut); font-size:.9rem; margin:4px 0 16px; }
-  input[type=text], input[type=password], input:not([type]), input[type=file] { width:100%; padding:11px; background:#171717; color:#fff; border:1px solid rgba(212,175,55,.35); font:inherit; }
+  input[type=text], input[type=password], input[type=time], input[type=date], input:not([type]), input[type=file] { width:100%; padding:11px; background:#171717; color:#fff; border:1px solid rgba(212,175,55,.35); font:inherit; }
   label { display:block; font-size:.75rem; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
   label input { margin-top:4px; text-transform:none; letter-spacing:0; }
   button, .btn { padding:11px 16px; background:var(--gold); color:#000; border:0; font:inherit; font-weight:700; cursor:pointer; }
@@ -652,6 +921,23 @@ $token = csrf();
   .photo .pb { display:flex; gap:6px; margin-top:8px; }
   .photo .pb form { flex:1; margin:0; } .photo .pb button { width:100%; padding:8px 4px; }
   .photo .n { font-size:.7rem; color:var(--mut); margin-top:6px; }
+  .en-line { grid-column:1 / -1; display:grid; grid-template-columns: 2.4fr 1.4fr; gap:8px; }
+  .en-line label, .gtitle + .gtitle { color:#9fb4d6; }
+  label.chk { display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:.9rem; color:var(--txt); margin-top:8px; }
+  label.chk input { width:auto; margin:0; }
+  .hrow { display:grid; grid-template-columns: 9rem 1fr 1fr auto; gap:10px; align-items:end; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.06); }
+  .hday { color:var(--txt); font-weight:600; padding-bottom:10px; }
+  .toggle { display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--line); background:#111; font-size:1.05rem; color:#fff; text-transform:none; letter-spacing:0; }
+  .toggle input { width:22px; height:22px; margin:0; accent-color:#ffe94a; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .member { display:grid; grid-template-columns: 140px 1fr; gap:14px; border:1px solid var(--line); padding:14px; margin-bottom:14px; }
+  .m-photo img { width:100%; aspect-ratio:4/5; object-fit:cover; display:block; background:#000; }
+  .nophoto { display:flex; align-items:center; justify-content:center; text-align:center; width:100%; aspect-ratio:4/5; background:#111; color:var(--mut); font-size:.7rem; padding:6px; }
+  .m-body { display:grid; gap:10px; min-width:0; }
+  .m-top { display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap:8px; }
+  .m-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .jump { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 20px; }
+  .jump a { color:var(--gold); border:1px solid var(--line); padding:6px 12px; text-decoration:none; font-size:.85rem; }
   .login { max-width:380px; margin:12vh auto 0; }
   code { background:#171717; padding:2px 6px; }
   pre { background:#171717; padding:12px; overflow:auto; }
@@ -661,6 +947,11 @@ $token = csrf();
     .row .f-name, .row .f-note { grid-column: 1 / -1; }
     .row button.x { grid-column: 1 / -1; }
     .rev-top { grid-template-columns: 1fr 1fr; } .rev-top .f-name { grid-column: 1 / -1; }
+    .en-line { grid-template-columns: 1fr; }
+    .hrow { grid-template-columns: 1fr 1fr; } .hday { grid-column: 1 / -1; padding-bottom:0; } .hrow .chk { grid-column: 1 / -1; }
+    .two { grid-template-columns: 1fr; }
+    .member { grid-template-columns: 1fr; } .m-photo { max-width:160px; }
+    .m-top { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -710,10 +1001,61 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
     <p class="hint">Wejście liczy się raz na sesję przeglądarki, boty są pomijane. Wykres jest dokładny od momentu wgrania nowego skryptu licznika.</p>
   </section>
 
+  <nav class="jump" aria-label="Skróty">
+    <a href="#komunikat">Pasek komunikatu</a><a href="#godziny">Godziny</a><a href="#zespol">Zespół</a><a href="#ceny">Cennik</a><a href="#galeria">Galeria</a><a href="#opinie">Opinie</a>
+  </nav>
+
+  <!-- ============ KOMUNIKAT ============ -->
+  <section class="card" id="komunikat">
+    <h2>Pasek komunikatu</h2>
+    <p class="hint">Żółty pasek na samej górze strony (np. „W piątek 1 maja nieczynne”). <strong>Domyślnie jest ukryty.</strong> Włącz go tylko wtedy, gdy masz coś do ogłoszenia. Pasek chowa się sam po przewinięciu strony i po dacie „Pokazuj do”.</p>
+    <form method="post">
+      <input type="hidden" name="action" value="save_announcement">
+      <input type="hidden" name="csrf" value="<?= h($token) ?>">
+      <label class="toggle"><input type="checkbox" name="ann[enabled]" value="1" <?= !empty($announcement['enabled']) ? 'checked' : '' ?>> Pokazuj pasek na stronie</label>
+      <div class="two">
+        <label>Treść (PL)<input name="ann[text]" value="<?= h($announcement['text'] ?? '') ?>" maxlength="200" placeholder="np. Dziś pracujemy do 14:00"></label>
+        <label>Treść (EN)<input name="ann[text_en]" value="<?= h($announcement['text_en'] ?? '') ?>" maxlength="200" placeholder="e.g. Open until 2 pm today"></label>
+        <label>Pokazuj do (włącznie, opcjonalnie)<input type="date" name="ann[until]" value="<?= h($announcement['until'] ?? '') ?>"></label>
+        <label>Link po kliknięciu (opcjonalnie)<input name="ann[url]" value="<?= h($announcement['url'] ?? '') ?>" maxlength="300" placeholder="https://..."></label>
+      </div>
+      <p class="hint" style="margin-bottom:0">Gdy pole EN jest puste, na angielskiej wersji pokaże się tekst polski (i odwrotnie).</p>
+      <div class="actions"><button type="submit">Zapisz komunikat</button></div>
+    </form>
+  </section>
+
+  <!-- ============ GODZINY ============ -->
+  <section class="card" id="godziny">
+    <h2>Godziny otwarcia</h2>
+    <p class="hint">Na ich podstawie strona pokazuje neonowy znaczek „Otwarte teraz / Zamknięte” oraz listę w stopce. Dni o tych samych godzinach są łączone (np. „Poniedziałek – Czwartek”). Czas liczony jest w strefie Polski.</p>
+    <form method="post">
+      <input type="hidden" name="action" value="save_hours">
+      <input type="hidden" name="csrf" value="<?= h($token) ?>">
+      <?php foreach (DAY_KEYS as $i => $k) { echo hours_row_html($k, $i, $hours[$k] ?? null); } ?>
+      <div class="actions"><button type="submit">Zapisz godziny</button></div>
+    </form>
+  </section>
+
+  <!-- ============ ZESPÓŁ ============ -->
+  <section class="card" id="zespol">
+    <h2>Zespół</h2>
+    <p class="hint">Osoby w sekcji „Ludzie za fotelem”. Dodaj, zmień opis, wgraj zdjęcie (przytnie się do pionowego kadru 4:5, najlepiej portret od pasa w górę) albo usuń osobę. Kolejność zmieniasz strzałkami. Maks. <?= MAX_TEAM ?> osób. Wszystko zapisuje przycisk na dole. <?= empty($content['team']) ? '<strong>Teraz widać zespół domyślny</strong>; po zapisie zmian lista zostaje na stałe.' : 'Usuń wszystkie osoby i zapisz, żeby wrócić do zespołu domyślnego.' ?></p>
+    <form method="post" id="teamForm" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="save_team">
+      <input type="hidden" name="csrf" value="<?= h($token) ?>">
+      <div id="members">
+        <?php foreach (array_values($team) as $i => $m) { echo team_row_html($i, $m); } ?>
+      </div>
+      <button type="button" class="add" id="addMember">+ Dodaj osobę</button>
+      <div class="actions"><button type="submit">Zapisz zespół</button></div>
+    </form>
+    <template id="tplMember"><?= team_row_html('__I__') ?></template>
+  </section>
+
   <!-- ============ CENY ============ -->
   <section class="card" id="ceny">
     <h2>Cennik</h2>
-    <p class="hint">Zmień ceny, dodaj usługę albo całą grupę i kliknij „Zapisz cennik”. Zmiany są od razu widoczne na stronie. Cena to sama liczba (np. <code>100</code>), a „od” zapisujesz z plusem (<code>120+</code>).</p>
+    <p class="hint">Zmień ceny, dodaj usługę albo całą grupę i kliknij „Zapisz cennik”. Pola „EN” to tłumaczenia dla angielskiej wersji (puste = pokaże się polski tekst). Zmiany są od razu widoczne na stronie. Cena to sama liczba (np. <code>100</code>), a „od” zapisujesz z plusem (<code>120+</code>).</p>
     <form method="post" id="priceForm">
       <input type="hidden" name="action" value="save_prices">
       <input type="hidden" name="csrf" value="<?= h($token) ?>">
@@ -783,7 +1125,7 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
   <?php if (is_file($BACKUP)): ?>
   <section class="card">
     <h2>Pomyłka?</h2>
-    <p class="hint">Panel zapamiętuje jedną poprzednią wersję zmian (ceny i kolejność zdjęć).</p>
+    <p class="hint">Panel zapamiętuje jedną poprzednią wersję zmian (ceny, zespół, godziny, komunikat, opinie i kolejność zdjęć).</p>
     <form method="post" onsubmit="return confirm('Wrócić do poprzedniej wersji?')"><input type="hidden" name="action" value="restore_backup"><input type="hidden" name="csrf" value="<?= h($token) ?>"><button class="sec" type="submit">Przywróć poprzednią wersję</button></form>
   </section>
   <?php endif; ?>
@@ -820,6 +1162,24 @@ return ['password' =&gt; 'TU_WPISZ_SWOJE_HASLO'];</pre>
       var what = rm.getAttribute('data-remove') === '.group' ? 'całą grupę usług' : 'tę usługę';
       if (confirm('Usunąć ' + what + '? (zmiana zapisze się dopiero po kliknięciu „Zapisz cennik”)')) target.remove();
     }
+  });
+  var members = document.getElementById('members');
+  var memberTpl = document.getElementById('tplMember').innerHTML;
+  document.getElementById('addMember').addEventListener('click', function () {
+    var el = html(memberTpl.split('__I__').join(counter++));
+    members.appendChild(el);
+    el.querySelector('input[name$="[name]"]').focus();
+  });
+  members.addEventListener('click', function (e) {
+    var mv = e.target.closest('[data-move]');
+    if (mv) {
+      var card = mv.closest('.member');
+      if (mv.getAttribute('data-move') === '-1' && card.previousElementSibling) members.insertBefore(card, card.previousElementSibling);
+      if (mv.getAttribute('data-move') === '1' && card.nextElementSibling) members.insertBefore(card.nextElementSibling, card);
+      return;
+    }
+    var rm = e.target.closest('[data-remove]');
+    if (rm && confirm('Usunąć tę osobę z zespołu? (zmiana zapisze się po kliknięciu „Zapisz zespół”)')) rm.closest('.member').remove();
   });
   var revs = document.getElementById('revs');
   var revTpl = document.getElementById('tplRev').innerHTML;

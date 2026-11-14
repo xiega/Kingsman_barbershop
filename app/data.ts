@@ -4,6 +4,7 @@
  */
 
 import defaults from "./content-defaults.json";
+import type { Hours } from "./hours";
 
 export const BOOKING_URL =
   "https://booksy.com/pl-pl/291654_kingsman-barbershop_barber-shop_15608_poznan";
@@ -24,22 +25,21 @@ export const CONTACT = {
 
 export const SITE_URL = "https://kingsman-barbershop.pl";
 
-export const HOURS = [
-  { days: "Poniedziałek – Czwartek", time: "07:00 – 16:00" },
-  { days: "Piątek", time: "07:00 – 20:00" },
-  { days: "Sobota", time: "07:00 – 16:00" },
-  { days: "Niedziela", time: "Zamknięte" },
-];
+/** Godziny, zespół i komunikat są w app/content-defaults.json; panel /admin.php nadpisuje je w content.json. */
+export const DEFAULT_HOURS: Hours = defaults.hours as Hours;
 
 export type PriceItem = {
   name: string;
   price: string; // "100" albo "120+" (cena od)
   duration: string;
   note?: string;
+  name_en?: string;
+  note_en?: string;
 };
 
 export type PriceGroup = {
   title: string;
+  title_en?: string;
   items: PriceItem[];
 };
 
@@ -50,39 +50,35 @@ export type PriceGroup = {
 export const PRICE_GROUPS: PriceGroup[] = defaults.prices;
 
 export type TeamMember = {
-  /** Nazwa pliku ze zdjęciem: public/img/team/<slug>-400.webp i -800.webp */
-  slug: string;
+  id: string;
   name: string;
   role: string;
-  /** Krótki opis. Gdy pusty, sekcja pokazuje tylko imię i rolę. */
+  role_en?: string;
+  /** Krótki opis. Gdy pusty, karta pokazuje tylko imię i rolę. */
   bio?: string;
+  bio_en?: string;
+  /** Zdjęcie: ścieżka bez rozmiaru i rozszerzenia (np. /img/team/julita). Brak = logo zamiast zdjęcia. */
+  photo?: { base: string; widths: number[] } | null;
 };
 
-export const TEAM: TeamMember[] = [
-  {
-    slug: "julita",
-    name: "Julita",
-    role: "Barber",
-    bio: "Dietetykiem nie jest, ale ma duże zamiłowanie do brokułów 🥦. Jeśli jeździsz na Kukirinie lub słuchasz Okekela, koniecznie wpadnij na jej fotel 🤤🤤",
-  },
-  {
-    slug: "kacper",
-    name: "Kacper",
-    role: "Barber",
-    bio: "Kacper, inaczej grubson 🎤. Ciężki humor, debaty polityczne? Nie ma znaczenia, z nim każdy temat może być poruszony 😎 Ulubione strzyżenia? Każde 🥸. Nie ma znaczenia, z czym przyjdziesz na głowie, zawsze będzie ugotowane 🤤. Jestem tego pewny, w głębi duszy o tym wiem, że gdzieś na Różanej wszyscy razem spotkamy się ⛰️",
-  },
-  {
-    slug: "wojtek",
-    name: "Wojtek",
-    role: "Barber",
-    bio: "Nasz polsko-turecki wojownik zaprasza na fotel 💺\nŚrednio mówi po polsku, jeszcze gorzej po turecku 😩\nJedno jest pewne: zrobi strzyżenie lepiej niż twoja osiedlowa fryzjerka 💇 Buyrun 🇹🇷😆",
-  },
-];
+export const TEAM: TeamMember[] = defaults.team as TeamMember[];
+
+export type Announcement = {
+  enabled: boolean;
+  text: string;
+  text_en: string;
+  /** ostatni dzień wyświetlania (YYYY-MM-DD) albo pusty tekst = bez końca */
+  until: string;
+  url?: string;
+};
+
+export const DEFAULT_ANNOUNCEMENT: Announcement = defaults.announcement;
 
 export type Cut = {
   name: string; // plik: public/img/<name>-<szerokość>.webp
   widths: readonly number[];
   alt: string;
+  alt_en?: string;
   speed: number; // siła parallaxu na desktopie
 };
 
@@ -90,6 +86,7 @@ export const CUTS: Cut[] = defaults.gallery.map((g) => ({
   name: g.base.replace(/^\/img\//, ""),
   widths: g.widths,
   alt: g.alt,
+  alt_en: g.alt_en,
   speed: g.speed,
 }));
 
