@@ -34,12 +34,7 @@ export function OpenBadge({ lang = "pl", icon = true }: { lang?: Lang; icon?: bo
   return (
     <span className="inline-flex items-center gap-2" role="status">
       {icon && <FaClock className="text-gold" aria-hidden="true" />}
-      <span
-        aria-hidden="true"
-        className={`inline-block h-2 w-2 rounded-full ${
-          status.open ? "bg-neon shadow-[0_0_8px_var(--neon),0_0_16px_var(--neon)]" : "bg-white/30"
-        }`}
-      />
+      <span aria-hidden="true" className={`status-dot ${status.open ? "status-dot-open" : "status-dot-closed"}`} />
       <span className={status.open ? "neon-text font-medium" : "text-bone/70"}>{statusText(status, lang)}</span>
     </span>
   );

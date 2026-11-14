@@ -404,7 +404,7 @@ export default function SitePage({ lang }: { lang: Lang }) {
           intro={ratingIntro}
         />
         <ReviewsCarousel reviews={reviews} lang={lang} />
-        <div className="mt-8">
+        <div className="mt-4">
           <a
             href={reviewsUrl}
             target="_blank"

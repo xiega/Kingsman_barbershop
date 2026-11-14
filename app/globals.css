@@ -413,3 +413,64 @@ body {
 .bio-c {
   --bio-shape: polygon(0 0, 42% 0, calc(42% + 18px) 16px, 100% 16px, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
 }
+
+/* ---------- Kropka statusu Otwarte / Zamknięte ---------- */
+
+.status-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+}
+
+.status-dot-open {
+  background: var(--neon);
+  box-shadow:
+    0 0 6px var(--neon),
+    0 0 14px rgba(255, 233, 74, 0.7),
+    0 0 26px rgba(255, 233, 74, 0.35);
+}
+
+.status-dot-closed {
+  background: #9a9a9a;
+  box-shadow:
+    0 0 6px rgba(190, 190, 190, 0.7),
+    0 0 14px rgba(190, 190, 190, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-dot-open {
+    animation: dotPulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 6px var(--neon),
+      0 0 14px rgba(255, 233, 74, 0.7),
+      0 0 26px rgba(255, 233, 74, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 3px var(--neon),
+      0 0 8px rgba(255, 233, 74, 0.45),
+      0 0 14px rgba(255, 233, 74, 0.15);
+  }
+}
+
+/* ---------- Karty opinii ---------- */
+
+.review {
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
+
+@media (hover: hover) {
+  .review:hover {
+    transform: translateY(-4px);
+    filter: drop-shadow(0 8px 18px rgba(255, 233, 74, 0.12));
+  }
+}
